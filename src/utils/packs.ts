@@ -1,4 +1,10 @@
 import { parse } from "yaml";
+import { PackMetadata } from "./types";
+
+export type PackShell = {
+  uuid: string;
+  metadata?: PackMetadata;
+};
 
 export const getPackUuids = async (luniHandle: FileSystemDirectoryHandle) => {
   const packIndexHandle = await luniHandle.getFileHandle(".pi");
@@ -34,9 +40,10 @@ function uuidToBytes(uuid: string) {
   }
   return bytes;
 }
+
 export const getPacksMetadata = async (
   luniiHandle: FileSystemDirectoryHandle
-) => {
+): Promise<PackShell[]> => {
   console.log("getPacksMetadata");
   const packUuids = await getPackUuids(luniiHandle);
   const contentHandle = await luniiHandle.getDirectoryHandle(".content");
@@ -52,15 +59,19 @@ export const getPacksMetadata = async (
         );
         const packMetadataFile = await packMetadataHandle.getFile();
         const packMetadataYaml = await packMetadataFile.text();
-        return parse(packMetadataYaml);
+        return {
+          uuid,
+          metadata: parse(packMetadataYaml) as PackMetadata,
+        };
       } catch (e) {
         console.error(e);
         return {
           uuid,
-        };
+        } as PackShell;
       }
     })
   );
+
   return packsMetadata;
 };
 

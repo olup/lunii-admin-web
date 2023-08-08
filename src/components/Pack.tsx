@@ -1,10 +1,19 @@
-import { ActionIcon, Badge, Box, Paper, Space, Text } from "@mantine/core";
+import {
+  ActionIcon,
+  Badge,
+  Box,
+  Flex,
+  Paper,
+  Space,
+  Text,
+  Tooltip,
+} from "@mantine/core";
 import { IconArrowDown, IconArrowUp } from "@tabler/icons-react";
 import { FC } from "react";
-import { PackMetadata } from "../utils/types";
+import { PackShell } from "../utils/packs";
 
 export const Pack: FC<{
-  pack: PackMetadata;
+  pack: PackShell;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
 }> = ({ pack, onMoveDown, onMoveUp }) => {
@@ -21,10 +30,24 @@ export const Pack: FC<{
       </Box>
       <Space w={10} />
       <Box>
-        <Badge>{pack.uuid}</Badge>
-        <Text>{pack.title}</Text>
+        <Flex>
+          <Badge>{pack.uuid}</Badge>
+          {!pack.metadata ? (
+            <Tooltip
+              openDelay={500}
+              multiline
+              width={300}
+              label={`Vous pouvez importer les métadonnées depuis le Lunii Store ou la base de donnée de STUdio. A faire une fois. (Coming soon)`}
+            >
+              <Badge ml={5} color="yellow">
+                Métadonnée manquantes
+              </Badge>
+            </Tooltip>
+          ) : null}
+        </Flex>
+        <Text>{pack.metadata?.title}</Text>
         <Text lineClamp={1} color="gray">
-          {pack.description}
+          {pack.metadata?.description}
         </Text>
       </Box>
     </Paper>
