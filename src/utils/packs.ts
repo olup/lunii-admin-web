@@ -55,7 +55,9 @@ export const getPacksMetadata = async (
         return parse(packMetadataYaml);
       } catch (e) {
         console.error(e);
-        return null;
+        return {
+          uuid,
+        };
       }
     })
   );
