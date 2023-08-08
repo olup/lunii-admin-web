@@ -1,0 +1,17 @@
+import { Button, Center, Container, Text } from "@mantine/core";
+import { getLuniiHandle } from "../utils";
+
+export const UnConnectedApp = () => {
+  return (
+    <Container h="80vh">
+      <Center h="100%" style={{ flexDirection: "column" }}>
+        <Text mb={20}>
+          Pour utiliser Lunii Admin Web il faut donner les permissions au
+          navigateur d'accéder à votre appareil.
+        </Text>
+
+        <Button onClick={() => getLuniiHandle()}>Charger ma Lunii</Button>
+      </Center>
+    </Container>
+  );
+};
