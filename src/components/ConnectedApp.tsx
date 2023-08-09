@@ -1,8 +1,9 @@
 import { Container } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { state } from "../store";
-import { changePackPosition, getPacksMetadata } from "../utils/packs";
+import { changePackPosition, getPacksMetadata } from "../utils/lunii/packs";
 import { Pack } from "./Pack";
+import { Header } from "./Header";
 
 export const ConnectedApp = () => {
   const client = useQueryClient();
@@ -20,6 +21,7 @@ export const ConnectedApp = () => {
 
   return (
     <Container>
+      <Header />
       {data?.map((pack, i) => (
         <Pack
           key={pack.uuid}

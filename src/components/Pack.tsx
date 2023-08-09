@@ -10,7 +10,7 @@ import {
 } from "@mantine/core";
 import { IconArrowDown, IconArrowUp } from "@tabler/icons-react";
 import { FC } from "react";
-import { PackShell } from "../utils/packs";
+import { PackShell } from "../utils/lunii/packs";
 
 export const Pack: FC<{
   pack: PackShell;
