@@ -39,7 +39,7 @@ export const Header = () => {
       <Button
         leftIcon={<IconExternalLink size={18} />}
         component="a"
-        href=""
+        href="https://lunii-admin-builder.pages.dev"
         target="_blank"
         variant="subtle"
       >
