@@ -1,6 +1,11 @@
 import { convertAudioToMP3 } from "../convertors/audio";
 import { convertImageToBmp4 } from "../convertors/image";
-import { getFileHandleFromPath, getRootDirectory, readFile } from "../fs";
+import {
+  getFileHandleFromPath,
+  getRootDirectory,
+  readFile,
+  writeFile,
+} from "../fs";
 import {
   getAudioAssetList,
   getImageAssetList,
@@ -48,7 +53,7 @@ export const installPack = async (archive: FileSystemFileHandle) => {
   const liBinary = generateLiBinary(listNodesList, pack.stageNodes);
 
   // write binaries
-  // todo
+  write;
 
   // convert and write all images to bmp4
   for (const asset of imageAssetList) {
@@ -58,14 +63,7 @@ export const installPack = async (archive: FileSystemFileHandle) => {
     const bmp = await convertImageToBmp4(imageFile);
 
     const assetName = asset.position.toString().padStart(8, "0");
-    const bmpFileHandle = await getFileHandleFromPath(
-      outDir,
-      "rf/000/" + assetName,
-      true
-    );
-    const writer = await bmpFileHandle.createWritable();
-    await writer.write(bmp);
-    await writer.close();
+    await writeFile(outDir, "rf/000/" + assetName, bmp, true);
   }
   console.log("All images converted to bmp4");
 
@@ -77,14 +75,7 @@ export const installPack = async (archive: FileSystemFileHandle) => {
     const mp3 = await convertAudioToMP3(audioFile);
 
     const assetName = asset.position.toString().padStart(8, "0");
-    const bmpFileHandle = await getFileHandleFromPath(
-      outDir,
-      "sf/000/" + assetName,
-      true
-    );
-    const writer = await bmpFileHandle.createWritable();
-    await writer.write(mp3);
-    await writer.close();
+    await writeFile(outDir, "sf/000/" + assetName, mp3, true);
   }
   console.log("All audios converted to mp3");
 };

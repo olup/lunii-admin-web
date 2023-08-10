@@ -1,5 +1,5 @@
 import JSZip from "jszip";
-import { getFileHandleFromPath } from "./fs";
+import { writeFile } from "./fs";
 
 // Extract zip to opfs
 export async function unzip(zipFile: File, outDir: FileSystemDirectoryHandle) {
@@ -12,14 +12,7 @@ export async function unzip(zipFile: File, outDir: FileSystemDirectoryHandle) {
         const fileData = await file.async("uint8array");
         // Normalize the path by replacing forward slashes with the appropriate separator
         const normalizedPath = relativePath.replace(/\//g, "/");
-        const fileHandle = await getFileHandleFromPath(
-          outDir,
-          normalizedPath,
-          true
-        );
-        const writer = await fileHandle.createWritable();
-        await writer.write(fileData);
-        await writer.close();
+        await writeFile(outDir, normalizedPath, fileData, true);
       }
     }
 

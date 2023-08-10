@@ -58,3 +58,15 @@ export const rmRf = async (
 export const readFile = (file: FileSystemFileHandle) => {
   return file.getFile().then((file) => file.text());
 };
+
+export const writeFile = async (
+  root: FileSystemDirectoryHandle,
+  path: string,
+  content: Uint8Array | Blob | string,
+  createIfNotExists = false
+) => {
+  const fileHandle = await getFileHandleFromPath(root, path, createIfNotExists);
+  const writable = await fileHandle.createWritable();
+  await writable.write(content);
+  await writable.close();
+};
