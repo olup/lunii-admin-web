@@ -42,6 +42,7 @@ export const installPack = async (archive: FileSystemFileHandle) => {
 
   // generate binaries
   const imageAssetListBinary = generateBinaryFromAssetIndex(imageAssetList);
+  const audioAssetListBinary = generateBinaryFromAssetIndex(audioAssetList);
 
   const niBinary = generateNiBinary(
     pack,
@@ -53,7 +54,10 @@ export const installPack = async (archive: FileSystemFileHandle) => {
   const liBinary = generateLiBinary(listNodesList, pack.stageNodes);
 
   // write binaries
-  write;
+  writeFile(outDir, "ri", imageAssetListBinary, true);
+  writeFile(outDir, "si", audioAssetListBinary, true);
+  writeFile(outDir, "ni", niBinary, true);
+  writeFile(outDir, "li", liBinary, true);
 
   // convert and write all images to bmp4
   for (const asset of imageAssetList) {
@@ -65,7 +69,7 @@ export const installPack = async (archive: FileSystemFileHandle) => {
     const assetName = asset.position.toString().padStart(8, "0");
     await writeFile(outDir, "rf/000/" + assetName, bmp, true);
   }
-  console.log("All images converted to bmp4");
+  console.log("All images were successfully converted to bmp4");
 
   // convert and write all audios to mp3
   for (const asset of audioAssetList) {
@@ -77,5 +81,5 @@ export const installPack = async (archive: FileSystemFileHandle) => {
     const assetName = asset.position.toString().padStart(8, "0");
     await writeFile(outDir, "sf/000/" + assetName, mp3, true);
   }
-  console.log("All audios converted to mp3");
+  console.log("All audios were successfully converted to mp3");
 };
