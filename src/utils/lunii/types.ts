@@ -4,6 +4,7 @@ export type PackMetadata = {
   ref: string;
   title: string;
   uuid: string;
+  installSource?: string;
 };
 
 export type StudioStageNode = {

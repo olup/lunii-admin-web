@@ -3,7 +3,7 @@ import { getLuniiHandle } from "../utils";
 import { getDeviceInfo } from "../utils/lunii/deviceInfo";
 import { state } from "../store";
 
-export const UnConnectedApp = () => {
+export const UnconnectedApp = () => {
   return (
     <Container h="80vh">
       <Center h="100%" style={{ flexDirection: "column" }}>

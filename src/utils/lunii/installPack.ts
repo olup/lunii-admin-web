@@ -8,6 +8,7 @@ import {
   getFileHandleFromPath,
   getRootDirectory,
   readFile,
+  rmRf,
   writeFile,
 } from "../fs";
 import {
@@ -20,8 +21,8 @@ import { generateBtBinary } from "../generators/bt";
 import { generateLiBinary } from "../generators/li";
 import { generateNiBinary } from "../generators/ni";
 import { unzip } from "../zip";
-import { StudioPack } from "./types";
-import { getPackUuids, writePackUuids } from "./packs";
+import { addPackUuid } from "./packs";
+import { PackMetadata, StudioPack } from "./types";
 
 export const installPack = async (
   archive: FileSystemFileHandle,
@@ -106,25 +107,37 @@ export const installPack = async (
   console.log("All audios were successfully converted to mp3");
 
   // write yaml metadata
-  const md = stringify({
-    name: pack.name,
-    // todo
-  });
-  await writeFile(outDir, "md", md, true);
+  const metadata: PackMetadata = {
+    description: pack.description,
+    ref: pack.uuid.slice(-8).toUpperCase(),
+    title: pack.title,
+    uuid: pack.uuid,
+    packType: "custom",
+    installSource: "lunii-admin",
+  };
+
+  await writeFile(outDir, "md", stringify(metadata), true);
+
+  console.log("Metadata was successfully generated");
 
   // copy all temp files to the device
   const deviceHandle = state.luniiHandle.peek();
   const contentDir = await deviceHandle.getDirectoryHandle(".content");
-  const packDir = await contentDir.getDirectoryHandle(pack.ref, {
+  const packDir = await contentDir.getDirectoryHandle(metadata.ref, {
     create: true,
   });
+
   await copyAll(outDir, packDir);
 
+  console.log("Generated files were successfully copied to the device");
+
   // add pack to device pack index
-  const packsUuids = await getPackUuids(state.luniiHandle.peek());
-  packsUuids.push(pack.ref);
-  await writePackUuids(state.luniiHandle.peek(), packsUuids);
+  await addPackUuid(deviceHandle, metadata.uuid);
+
+  console.log("Pack uuid was successfully added to the device index");
 
   // clean
   await rmRf(root, "temp");
+
+  console.log("Temporary files were successfully removed");
 };

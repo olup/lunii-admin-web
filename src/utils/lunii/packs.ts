@@ -109,3 +109,25 @@ export const changePackPosition = async (
 
   await writePackUuids(luniiHandle, uuids);
 };
+
+export const addPackUuid = async (
+  luniiHandle: FileSystemDirectoryHandle,
+  uuid: string
+) => {
+  const uuids = await getPackUuids(luniiHandle);
+  uuids.push(uuid);
+  await writePackUuids(luniiHandle, uuids);
+};
+
+export const removePackUuid = async (
+  luniiHandle: FileSystemDirectoryHandle,
+  uuid: string
+) => {
+  const uuids = await getPackUuids(luniiHandle);
+  const index = uuids.indexOf(uuid);
+  if (index === -1) {
+    throw new Error("Pack not found");
+  }
+  uuids.splice(index, 1);
+  await writePackUuids(luniiHandle, uuids);
+};
