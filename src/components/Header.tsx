@@ -1,8 +1,6 @@
 import { ActionIcon, Button, Flex, Space } from "@mantine/core";
 import {
-  IconBrandDiscord,
   IconBrandDiscordFilled,
-  IconBrandGithub,
   IconBrandGithubFilled,
   IconExternalLink,
   IconUpload,
@@ -54,7 +52,7 @@ export const Header = () => {
         variant="light"
         size="lg"
         component="a"
-        href=""
+        href="https://github.com/olup/lunii-admin-web"
         target="_blank"
       >
         <IconBrandGithubFilled size={18} />

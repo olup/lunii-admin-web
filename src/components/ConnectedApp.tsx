@@ -1,4 +1,4 @@
-import { ActionIcon, Container, Space } from "@mantine/core";
+import { Container, Space } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { state } from "../store";
 import {
@@ -6,9 +6,8 @@ import {
   getPacksMetadata,
   removePackUuid,
 } from "../utils/lunii/packs";
-import { Pack } from "./Pack";
 import { Header } from "./Header";
-import { IconBrandGithub } from "@tabler/icons-react";
+import { Pack } from "./Pack";
 
 export const ConnectedApp = () => {
   const client = useQueryClient();
