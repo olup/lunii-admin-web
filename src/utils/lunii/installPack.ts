@@ -102,6 +102,9 @@ export const installPack = async (
 
     const assetName = asset.position.toString().padStart(8, "0");
     await writeFile(outDir, "sf/000/" + assetName, mp3, true);
+    console.log(
+      `Audio file ${asset.position} / ${audioAssetList.length} converted to mp3`
+    );
   }
   console.log("All audios were successfully converted to mp3");
 
