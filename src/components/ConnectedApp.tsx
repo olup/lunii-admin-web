@@ -2,6 +2,7 @@ import { Container, Space } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { state } from "../store";
 import {
+  PackShell,
   changePackPosition,
   getPacksMetadata,
   removePackUuid,
@@ -25,8 +26,16 @@ export const ConnectedApp = () => {
 
   const { mutate: removePack } = useMutation({
     mutationKey: "reorderPacks",
-    mutationFn: async (options: { uuid: string }) =>
-      removePackUuid(state.luniiHandle.peek()!, options.uuid),
+    mutationFn: async (options: { pack: PackShell }) => {
+      const deviceHandle = state.luniiHandle.peek()!;
+      const contentDir = await deviceHandle.getDirectoryHandle(".content");
+
+      await removePackUuid(deviceHandle, options.pack.uuid);
+      await contentDir.removeEntry(options.pack.metadata!.ref);
+
+      console.log("Pack removed");
+    },
+    onError: (err) => console.error(err),
     onSuccess: () => client.invalidateQueries("packs"),
   });
 
@@ -40,7 +49,7 @@ export const ConnectedApp = () => {
           pack={pack}
           onMoveUp={() => movePack({ from: i, to: i - 1 })}
           onMoveDown={() => movePack({ from: i, to: i + 1 })}
-          onRemove={() => removePack({ uuid: pack.uuid })}
+          onRemove={() => removePack({ pack })}
         />
       ))}
     </Container>

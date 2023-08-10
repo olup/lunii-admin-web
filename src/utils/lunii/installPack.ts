@@ -8,7 +8,6 @@ import {
   getFileHandleFromPath,
   getRootDirectory,
   readFile,
-  rmRf,
   writeFile,
 } from "../fs";
 import {
@@ -137,7 +136,7 @@ export const installPack = async (
   console.log("Pack uuid was successfully added to the device index");
 
   // clean
-  await rmRf(root, "temp");
+  await root.removeEntry("temp", { recursive: true });
 
   console.log("Temporary files were successfully removed");
 };

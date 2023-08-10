@@ -36,25 +36,6 @@ export async function getFileHandleFromPath(
 
 export const getRootDirectory = () => navigator.storage.getDirectory();
 
-export const cleanAll = async (dir: FileSystemDirectoryHandle) => {
-  for await (const entry of dir.values()) {
-    if (entry.kind === "file") {
-      await dir.removeEntry(entry.name);
-    } else {
-      await cleanAll(entry);
-    }
-  }
-};
-
-export const rmRf = async (
-  parent: FileSystemDirectoryHandle,
-  dirName: string
-) => {
-  const dir = await parent.getDirectoryHandle(dirName);
-  await cleanAll(dir);
-  await parent.removeEntry(dirName);
-};
-
 export const readFile = (file: FileSystemFileHandle) => {
   return file.getFile().then((file) => file.text());
 };

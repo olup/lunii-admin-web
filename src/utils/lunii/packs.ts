@@ -44,7 +44,6 @@ function uuidToBytes(uuid: string) {
 export const getPacksMetadata = async (
   luniiHandle: FileSystemDirectoryHandle
 ): Promise<PackShell[]> => {
-  console.log("getPacksMetadata");
   const packUuids = await getPackUuids(luniiHandle);
   const contentHandle = await luniiHandle.getDirectoryHandle(".content");
 
@@ -130,4 +129,5 @@ export const removePackUuid = async (
   }
   uuids.splice(index, 1);
   await writePackUuids(luniiHandle, uuids);
+  console.log("Uuid removed from index: ", uuid);
 };
