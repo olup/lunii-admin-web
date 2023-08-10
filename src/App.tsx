@@ -1,5 +1,5 @@
 import { ConnectedApp } from "./components/ConnectedApp";
-import { UnconnectedApp } from "./components/UnconnectedApp";
+import { UnconnectedApp } from "./components/UnConnectedApp";
 import { UnavailableApp } from "./components/UnavailableApp";
 import { state } from "./store";
 
