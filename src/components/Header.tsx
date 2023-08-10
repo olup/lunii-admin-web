@@ -1,12 +1,11 @@
 import { Box, Button } from "@mantine/core";
 import { IconUpload } from "@tabler/icons-react";
-import { unzipToOpfs } from "../utils/zip";
+import { installPack } from "../utils/lunii/installPack";
 
 export const Header = () => {
   const onInstallPack = async () => {
     const [fileHandle] = await window.showOpenFilePicker();
-    const file = await fileHandle.getFile();
-    await unzipToOpfs(file);
+    await installPack(fileHandle);
   };
 
   return (

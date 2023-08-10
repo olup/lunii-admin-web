@@ -54,3 +54,7 @@ export const rmRf = async (
   await cleanAll(dir);
   await parent.removeEntry(dirName);
 };
+
+export const readFile = (file: FileSystemFileHandle) => {
+  return file.getFile().then((file) => file.text());
+};
