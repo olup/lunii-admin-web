@@ -18,10 +18,10 @@ export function cipherFirstBlockCommonKey(data: Uint8Array): Uint8Array {
   const firstBlockLength = Math.min(512, data.length);
   const firstBlock = data.subarray(0, firstBlockLength);
 
-  const dataInt = toUint32Array(firstBlock, true);
+  const dataInt = toUint32Array(firstBlock);
 
   const encryptedIntData = encryptUint32Array(dataInt, keyUint32);
-  const encryptedBlock = toUint8Array(encryptedIntData, true);
+  const encryptedBlock = toUint8Array(encryptedIntData);
 
   if (encryptedBlock === null) {
     throw new Error("Encrypted block is null");
@@ -37,10 +37,10 @@ export function decipherFirstBlockCommonKey(data: Uint8Array): Uint8Array {
   const firstBlockLength = Math.min(512, data.length);
   const firstBlock = data.subarray(0, firstBlockLength);
 
-  const dataInt = toUint32Array(firstBlock, true);
+  const dataInt = toUint32Array(firstBlock);
 
   const encryptedIntData = decryptUint32Array(dataInt, keyUint32);
-  const decryptedBlock = toUint8Array(encryptedIntData, true);
+  const decryptedBlock = toUint8Array(encryptedIntData);
 
   if (decryptedBlock === null) {
     throw new Error("Decrypted block is null");
@@ -80,5 +80,5 @@ export function cipherBlockSpecificKey(
   const dataInt = toUint32Array(data, true);
   const specificKeyInt = toUint32Array(specificKey, false);
   const encryptedIntData = encryptUint32Array(dataInt, specificKeyInt);
-  return toUint8Array(encryptedIntData, true);
+  return toUint8Array(encryptedIntData);
 }

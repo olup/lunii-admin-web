@@ -1,5 +1,6 @@
 import { createFFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
+import { state } from "../../store";
 
 const ffmpeg = createFFmpeg();
 
@@ -7,6 +8,7 @@ const loadFFmpeg = async () => {
   console.log("Loading ffmpeg");
   await ffmpeg.load();
   console.log("FFmpeg loaded");
+  state.isFfmpegLoaded.set(true);
 };
 
 loadFFmpeg();

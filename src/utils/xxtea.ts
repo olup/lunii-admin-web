@@ -19,7 +19,6 @@ const delta = 0x9e3779b9;
 
 export function toUint8Array(
   v: Uint32Array,
-  littleEndian: boolean,
   includeLength: boolean = false
 ): Uint8Array | null {
   const length = v.length;
@@ -41,7 +40,7 @@ export function toUint8Array(
 
 export function toUint32Array(
   bytes: Uint8Array,
-  littleEndian: boolean,
+  littleEndian: boolean = true,
   includeLength: boolean = false
 ): Uint32Array {
   const length = bytes.length;
@@ -56,9 +55,17 @@ export function toUint32Array(
   } else {
     v = new Uint32Array(n);
   }
-  for (let i = 0; i < length; ++i) {
-    v[i >> 2] |= bytes[i] << ((i & 3) << 3);
+
+  if (littleEndian) {
+    for (let i = 0; i < length; ++i) {
+      v[i >> 2] |= bytes[i] << ((i & 3) << 3);
+    }
+  } else {
+    for (let i = 0; i < length; ++i) {
+      v[i >> 2] |= bytes[length - 1 - i] << ((i & 3) << 3);
+    }
   }
+
   return v;
 }
 

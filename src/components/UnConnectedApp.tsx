@@ -1,5 +1,7 @@
 import { Button, Center, Container, Text } from "@mantine/core";
 import { getLuniiHandle } from "../utils";
+import { getDeviceInfo } from "../utils/lunii/deviceInfo";
+import { state } from "../store";
 
 export const UnConnectedApp = () => {
   return (
@@ -10,7 +12,19 @@ export const UnConnectedApp = () => {
           navigateur d'accéder à votre appareil.
         </Text>
 
-        <Button onClick={() => getLuniiHandle()}>Charger ma Lunii</Button>
+        <Button
+          onClick={async () => {
+            const handle = await getLuniiHandle();
+            if (!handle) return;
+
+            const device = await getDeviceInfo(handle);
+
+            await state.device.set(device);
+            await state.luniiHandle.set(handle);
+          }}
+        >
+          Charger ma Lunii
+        </Button>
       </Center>
     </Container>
   );

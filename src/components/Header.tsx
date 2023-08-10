@@ -1,11 +1,14 @@
 import { Box, Button } from "@mantine/core";
 import { IconUpload } from "@tabler/icons-react";
 import { installPack } from "../utils/lunii/installPack";
+import { state } from "../store";
 
 export const Header = () => {
   const onInstallPack = async () => {
     const [fileHandle] = await window.showOpenFilePicker();
-    await installPack(fileHandle);
+    const device = state.device.peek();
+    if (!device) return;
+    await installPack(fileHandle, device.specificKey);
   };
 
   return (

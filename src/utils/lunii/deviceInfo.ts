@@ -1,8 +1,10 @@
-type Device = {
+import { computeSpecificKeyFromUUID } from "../cipher";
+
+export type Device = {
   mountPoint: string;
   uuid: Uint8Array;
   uuidHex: string;
-  //specificKey: number[];
+  specificKey: Uint8Array;
   serialNumber: string;
   firmwareVersionMajor: number;
   firmwareVersionMinor: number;
@@ -43,5 +45,6 @@ export const getDeviceInfo = async (luniiHandle: FileSystemDirectoryHandle) => {
     firmwareVersionMajor,
     firmwareVersionMinor,
     mountPoint: luniiHandle.name,
+    specificKey: computeSpecificKeyFromUUID(uuid),
   } as Device;
 };

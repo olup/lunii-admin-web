@@ -70,3 +70,24 @@ export const writeFile = async (
   await writable.write(content);
   await writable.close();
 };
+
+export const copyAll = async (
+  source: FileSystemDirectoryHandle,
+  destination: FileSystemDirectoryHandle
+) => {
+  for await (const entry of source.values()) {
+    if (entry.kind === "file") {
+      const file = await entry.getFile();
+      const writable = await destination
+        .getFileHandle(entry.name, { create: true })
+        .then((file) => file.createWritable());
+      await writable.write(file);
+      await writable.close();
+    } else {
+      const dir = await destination.getDirectoryHandle(entry.name, {
+        create: true,
+      });
+      await copyAll(entry, dir);
+    }
+  }
+};
