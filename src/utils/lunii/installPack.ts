@@ -111,7 +111,7 @@ export const installPack = async (
 
       const assetName = asset.position.toString().padStart(8, "0");
       await writeFile(outDir, "rf/000/" + assetName, cipheredBmp, true);
-      await writeFile(outDir, "rf/000/" + assetName + "-debug.bmp", bmp, true); // debug
+      // await writeFile(outDir, "rf/000/" + assetName + "-debug.bmp", bmp, true); // debug
     }
     console.log("All images were successfully converted to bmp4");
 
@@ -141,7 +141,7 @@ export const installPack = async (
       const cipheredMp3 = cipherFirstBlockCommonKey(mp3);
 
       await writeFile(outDir, "sf/000/" + assetName, cipheredMp3, true);
-      await writeFile(outDir, "sf/000/" + assetName + "-debug.mp3", mp3, true); //debug
+      // await writeFile(outDir, "sf/000/" + assetName + "-debug.mp3", mp3, true); //debug
       console.log(
         `Audio file ${asset.position} / ${audioAssetList.length} converted to mp3`
       );
