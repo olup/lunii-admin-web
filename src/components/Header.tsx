@@ -1,4 +1,4 @@
-import { ActionIcon, Button, Flex, Space, Tooltip } from "@mantine/core";
+import { ActionIcon, Badge, Button, Flex, Space, Tooltip } from "@mantine/core";
 import {
   IconBrandDiscordFilled,
   IconBrandGithubFilled,
@@ -49,7 +49,7 @@ export const Header = () => {
   });
 
   return (
-    <Flex py={5}>
+    <Flex py={5} align="center">
       <Button
         leftIcon={<IconUpload size={18} />}
         onClick={() => doInstallPack()}
@@ -82,6 +82,8 @@ export const Header = () => {
 
       <Space style={{ flex: 1 }} />
 
+      <Badge>{__COMMIT_HASH__}</Badge>
+      <Space w={10} />
       <ActionIcon
         variant="light"
         size="lg"
