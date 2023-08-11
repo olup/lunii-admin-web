@@ -1,8 +1,15 @@
-import { Container } from "@mantine/core";
+import { Container, Space } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { state } from "../store";
-import { changePackPosition, getPacksMetadata } from "../utils/packs";
+import {
+  PackShell,
+  changePackPosition,
+  getPacksMetadata,
+  removePackUuid,
+} from "../utils/lunii/packs";
+import { Header } from "./Header";
 import { Pack } from "./Pack";
+import { InstallModal } from "./InstallModal";
 
 export const ConnectedApp = () => {
   const client = useQueryClient();
@@ -18,16 +25,40 @@ export const ConnectedApp = () => {
     onSuccess: () => client.invalidateQueries("packs"),
   });
 
+  const { mutate: removePack } = useMutation({
+    mutationKey: "reorderPacks",
+    mutationFn: async (options: { pack: PackShell }) => {
+      const deviceHandle = state.luniiHandle.peek()!;
+      const contentDir = await deviceHandle.getDirectoryHandle(".content");
+
+      await removePackUuid(deviceHandle, options.pack.uuid);
+
+      await contentDir.removeEntry(options.pack.metadata!.ref, {
+        recursive: true,
+      });
+
+      console.log("Pack removed");
+    },
+    onError: (err) => console.error(err),
+    onSuccess: () => client.invalidateQueries("packs"),
+  });
+
   return (
-    <Container>
-      {data?.map((pack, i) => (
-        <Pack
-          key={pack.uuid}
-          pack={pack}
-          onMoveUp={() => movePack({ from: i, to: i - 1 })}
-          onMoveDown={() => movePack({ from: i, to: i + 1 })}
-        />
-      ))}
-    </Container>
+    <>
+      <Container>
+        <Header />
+        <Space h={10} />
+        {data?.map((pack, i) => (
+          <Pack
+            key={pack.uuid}
+            pack={pack}
+            onMoveUp={() => movePack({ from: i, to: i - 1 })}
+            onMoveDown={() => movePack({ from: i, to: i + 1 })}
+            onRemove={() => removePack({ pack })}
+          />
+        ))}
+      </Container>
+      <InstallModal />
+    </>
   );
 };

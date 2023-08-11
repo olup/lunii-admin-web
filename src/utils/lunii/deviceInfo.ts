@@ -1,8 +1,10 @@
-type Device = {
+import { computeSpecificKeyFromUUID } from "../cipher";
+
+export type Device = {
   mountPoint: string;
   uuid: Uint8Array;
   uuidHex: string;
-  //specificKey: number[];
+  specificKey: Uint8Array;
   serialNumber: string;
   firmwareVersionMajor: number;
   firmwareVersionMinor: number;
@@ -28,13 +30,15 @@ export const getDeviceInfo = async (luniiHandle: FileSystemDirectoryHandle) => {
   // Convert the serial number to a formatted string
   const serialNumber = serialNumberRaw.toString().padStart(14, "0");
 
-  const uuid = new Uint8Array(buffer.slice(256, 512));
+  const uuid = new Uint8Array(buffer.slice(256, 256 + 256));
 
   // convert to hex
   let uuidHex = "";
   for (const byte of uuid) {
     uuidHex += byte.toString(16).padStart(2, "0"); // Convert byte to two-digit hexadecimal
   }
+
+  const specificKey = computeSpecificKeyFromUUID(uuid);
 
   return {
     uuid,
@@ -43,5 +47,6 @@ export const getDeviceInfo = async (luniiHandle: FileSystemDirectoryHandle) => {
     firmwareVersionMajor,
     firmwareVersionMinor,
     mountPoint: luniiHandle.name,
+    specificKey,
   } as Device;
 };
