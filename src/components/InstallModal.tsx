@@ -9,13 +9,7 @@ import {
   Space,
   Text,
 } from "@mantine/core";
-import {
-  IconChevronRight,
-  IconClock,
-  IconClock2,
-  IconClockBolt,
-  IconClockCog,
-} from "@tabler/icons-react";
+import { IconClockCog } from "@tabler/icons-react";
 import { useState } from "react";
 import { state } from "../store";
 import { TetrisBox } from "./Tetris";
