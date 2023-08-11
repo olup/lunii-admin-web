@@ -28,11 +28,12 @@ export const installPack = async (
   deviceSepcificKey: Uint8Array
 ) => {
   state.installation.isInstalling.set(true);
+  state.installation.step.set("UNZIPPING");
+
+  const file = await archive.getFile();
+  const root = await getRootDirectory();
 
   try {
-    const file = await archive.getFile();
-    const root = await getRootDirectory();
-
     // prepare the directories
     const tempDir = await root.getDirectoryHandle("temp", { create: true });
     const zipDir = await tempDir.getDirectoryHandle("zip", { create: true });
@@ -58,6 +59,7 @@ export const installPack = async (
     };
 
     state.installation.pack.set(metadata);
+    state.installation.step.set("PREPARING");
 
     // prepare datas
     const imageAssetList = getImageAssetList(pack);
@@ -91,6 +93,8 @@ export const installPack = async (
 
     console.log("All binaries were successfully generated");
 
+    state.installation.step.set("CONVERTING");
+
     // convert and write all images to bmp4
     for (const asset of imageAssetList) {
       const handle = await getFileHandleFromPath(
@@ -106,9 +110,13 @@ export const installPack = async (
 
       const assetName = asset.position.toString().padStart(8, "0");
       await writeFile(outDir, "rf/000/" + assetName, cipheredBmp, true);
-      await writeFile(outDir, "rf/000/" + assetName + ".bmp", bmp, true);
+      await writeFile(outDir, "rf/000/" + assetName + "-debug.bmp", bmp, true); // debug
     }
     console.log("All images were successfully converted to bmp4");
+
+    state.installation.audioFileGenerationProgress.totalCount.set(
+      audioAssetList.length
+    );
 
     // convert and write all audios to mp3
     for (const asset of audioAssetList) {
@@ -123,9 +131,12 @@ export const installPack = async (
 
       const assetName = asset.position.toString().padStart(8, "0");
       await writeFile(outDir, "sf/000/" + assetName, cipheredMp3, true);
-      await writeFile(outDir, "sf/000/" + assetName + ".mp3", mp3, true);
+      await writeFile(outDir, "sf/000/" + assetName + "-debug.mp3", mp3, true); //debug
       console.log(
         `Audio file ${asset.position} / ${audioAssetList.length} converted to mp3`
+      );
+      state.installation.audioFileGenerationProgress.doneCount.set(
+        asset.position
       );
     }
     console.log("All audios were successfully converted to mp3");
@@ -142,6 +153,7 @@ export const installPack = async (
       create: true,
     });
 
+    state.installation.step.set("COPYING");
     await copyAll(outDir, packDir);
 
     console.log("Generated files were successfully copied to the device");
@@ -150,15 +162,10 @@ export const installPack = async (
     await addPackUuid(deviceHandle, metadata.uuid);
 
     console.log("Pack uuid was successfully added to the device index");
-
+  } finally {
     // clean
     await root.removeEntry("temp", { recursive: true });
-
     console.log("Temporary files were successfully removed");
-
     state.installation.isInstalling.set(false);
-  } catch (error) {
-    state.installation.isInstalling.set(false);
-    throw error;
   }
 };

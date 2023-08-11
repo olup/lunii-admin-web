@@ -14,7 +14,10 @@ export const Header = () => {
 
   const { mutate: doInstallPack } = useMutation({
     mutationFn: async () => {
-      const [fileHandle] = await window.showOpenFilePicker();
+      const [fileHandle] = await window.showOpenFilePicker({
+        types: [{ accept: { "application/zip": [".zip"] } }],
+        multiple: false,
+      });
       const device = state.device.peek();
       if (!device) return;
       await installPack(fileHandle, device.specificKey);

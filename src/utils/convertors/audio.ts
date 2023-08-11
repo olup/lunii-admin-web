@@ -3,7 +3,12 @@ import { fetchFile } from "@ffmpeg/util";
 import { state } from "../../store";
 
 const ffmpeg = createFFmpeg({
-  log: true,
+  // log: true,
+  progress: (p) => {
+    state.installation.audioFileGenerationProgress.conversionProgress.set(
+      p.ratio * 100
+    );
+  },
 });
 
 const loadFFmpeg = async () => {

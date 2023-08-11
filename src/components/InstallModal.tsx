@@ -1,21 +1,108 @@
-import { Center, Overlay, Paper, Space, Text } from "@mantine/core";
+import {
+  Button,
+  Center,
+  Code,
+  Flex,
+  Overlay,
+  Paper,
+  Progress,
+  Space,
+  Text,
+} from "@mantine/core";
+import { IconChevronRight } from "@tabler/icons-react";
+import { useState } from "react";
 import { state } from "../store";
+import { TetrisBox } from "./Tetris";
 
+const stepToLabel = (step: string) => {
+  switch (step) {
+    case "UNZIPPING":
+      return "Extraction du pack";
+    case "PREPARING":
+      return "Préparation des fichiers";
+    case "CONVERTING":
+      return "Conversion des fichiers audio";
+    case "COPYING":
+      return "Copie sur l'appareil";
+    default:
+      return "Installation en cours";
+  }
+};
 export const InstallModal = () => {
-  const opened = state.installation.isInstalling.use();
-  const title = state.installation.pack.title.use();
+  const [showTetris, setShowTetris] = useState(false);
 
-  if (opened)
+  const installation = state.installation.use();
+  const audioProgress = installation.audioFileGenerationProgress;
+  const audioProgressPercent =
+    audioProgress.totalCount !== 0
+      ? (audioProgress.doneCount / audioProgress.totalCount) * 100
+      : 0;
+
+  if (installation.isInstalling)
     return (
       <Overlay color="#fff" blur={3}>
         <Space h={100} />
         <Center>
-          {title ? (
-            <Paper shadow="md" p="lg" radius="sm" w={500} withBorder>
-              <Text>Installation du pack</Text>
-              <Text>{title}</Text>
-            </Paper>
-          ) : null}
+          <Paper shadow="md" p="lg" radius="sm" w={500} withBorder>
+            <Text>Installation du pack</Text>
+            {installation.step !== "UNZIPPING" && (
+              <Text>
+                <Code>{installation.pack?.title}</Code>
+              </Text>
+            )}
+            <Space h={10} />
+            <Flex>
+              <IconChevronRight />
+              <Space w={5} />
+              <Text>{stepToLabel(installation.step)}</Text>
+            </Flex>
+            <Space h={10} />
+
+            {installation.step === "CONVERTING" ? (
+              <>
+                <Text>
+                  <Code>
+                    {audioProgress.doneCount} sur {audioProgress.totalCount}{" "}
+                    fichiers
+                  </Code>
+                </Text>
+                <Space h={10} />
+                <Progress
+                  h={10}
+                  value={audioProgress.conversionProgress}
+                  radius="xs"
+                />
+                <Space h={10} />
+                <Progress
+                  h={10}
+                  animate
+                  value={audioProgressPercent}
+                  radius="xs"
+                />
+              </>
+            ) : (
+              <>
+                <Space h={10} />
+                <Progress h={10} animate value={100} radius="xs" />
+              </>
+            )}
+            <Space h={10} />
+            <Center>
+              <Button
+                size="xs"
+                variant="subtle"
+                onClick={() => setShowTetris(!showTetris)}
+              >
+                Un peu long ? Essayez un Tetris
+              </Button>
+            </Center>
+            {showTetris && (
+              <>
+                <Space h={10} />
+                <TetrisBox />
+              </>
+            )}
+          </Paper>
         </Center>
       </Overlay>
     );

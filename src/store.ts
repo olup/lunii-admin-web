@@ -10,8 +10,11 @@ export const state = observable({
   installation: {
     isInstalling: false,
     pack: null as PackMetadata | null,
-    audioFileGenerationProgress: [0, 0],
-    imageFileGenerationProgress: [0, 0],
-    step: "" as "" | "PREPARING" | "CONVERTING" | "COPYING",
+    audioFileGenerationProgress: {
+      conversionProgress: 0,
+      totalCount: 0,
+      doneCount: 0,
+    },
+    step: "" as "" | "UNZIPPING" | "PREPARING" | "CONVERTING" | "COPYING",
   },
 });

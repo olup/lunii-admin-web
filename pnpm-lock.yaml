@@ -56,6 +56,9 @@ dependencies:
   react-query:
     specifier: ^3.39.3
     version: 3.39.3(react-dom@18.2.0)(react@18.2.0)
+  react-tetris:
+    specifier: ^0.3.0
+    version: 0.3.0(react-dom@18.2.0)(react@18.2.0)
   yaml:
     specifier: ^2.3.1
     version: 2.3.1
@@ -1812,6 +1815,10 @@ packages:
       setimmediate: 1.0.5
     dev: false
 
+  /keymaster@1.6.2:
+    resolution: {integrity: sha512-OvA/AALN8IDKKkTk2Z+bDrzs/SQao4lo/QPbwSdDvm+frxfiYiYCSn1aHFUypJY3SruAO1y/c771agBmTXqUtg==}
+    dev: false
+
   /levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
@@ -2160,6 +2167,17 @@ packages:
       invariant: 2.2.4
       react: 18.2.0
       tslib: 2.6.1
+    dev: false
+
+  /react-tetris@0.3.0(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-tb5vcF/SwNbLmUSEgLfJxXzLc4laG0elbJ4RNQpZ0iVFm6YFz5z5Sy6zMd9nXYProCAJwgheWd5OdgOxwTujBA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0
+      react-dom: ^16.8.0 || ^17.0.0
+    dependencies:
+      keymaster: 1.6.2
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
     dev: false
 
   /react-textarea-autosize@8.3.4(@types/react@18.2.15)(react@18.2.0):
