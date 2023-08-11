@@ -18,3 +18,16 @@ export const state = observable({
     step: "" as "" | "UNZIPPING" | "PREPARING" | "CONVERTING" | "COPYING",
   },
 });
+
+export const resetInstallationState = () => {
+  state.installation.set({
+    isInstalling: false,
+    pack: null,
+    audioFileGenerationProgress: {
+      conversionProgress: 0,
+      totalCount: 0,
+      doneCount: 0,
+    },
+    step: "",
+  });
+};

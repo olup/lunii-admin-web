@@ -1,5 +1,5 @@
 import { stringify } from "yaml";
-import { state } from "../../store";
+import { resetInstallationState, state } from "../../store";
 import { cipherFirstBlockCommonKey } from "../cipher";
 import { convertAudioToMP3 } from "../convertors/audio";
 import { convertImageToBmp4 } from "../convertors/image";
@@ -176,6 +176,6 @@ export const installPack = async (
     // clean
     await root.removeEntry("temp", { recursive: true });
     console.log("Temporary files were successfully removed");
-    state.installation.isInstalling.set(false);
+    resetInstallationState();
   }
 };

@@ -1,6 +1,7 @@
 export const convertImageToBmp4 = async (blob: Blob): Promise<Blob> => {
   const img = await getImage(blob);
-  const bmp = await treatImage(img);
+  const ctx = await resizeAndFlip(img);
+  const bmp = await create4BitGrayscaleBMP(ctx);
   return new Blob([bmp], { type: "image/bmp" });
 };
 
@@ -14,7 +15,7 @@ const getImage = async (blob: Blob): Promise<HTMLImageElement> => {
 };
 
 // resize and convert to bmp4
-const treatImage = async (img: HTMLImageElement) => {
+const resizeAndFlip = async (img: HTMLImageElement) => {
   const width = 320;
   const height = 240;
 
@@ -33,27 +34,26 @@ const treatImage = async (img: HTMLImageElement) => {
   ctx.translate(0, -height);
 
   ctx.drawImage(img, 0, 0, newWidth, newHeight);
-
-  return create4BitGrayscaleBMP(ctx);
+  return ctx;
 };
 
 function create4BitGrayscaleBMP(
   context: OffscreenCanvasRenderingContext2D
 ): Uint8Array {
-  const canvasWidth = context.canvas.width;
-  const canvasHeight = context.canvas.height;
+  const width = context.canvas.width;
+  const height = context.canvas.height;
 
-  const imageData = context.getImageData(0, 0, canvasWidth, canvasHeight);
+  const imageData = context.getImageData(0, 0, width, height);
   const data = imageData.data;
 
   const bmpData: number[] = [];
 
-  // Start of Bitmap Data
-  for (let i = 0; i < canvasHeight; i++) {
+  // Encode bitmap pixels as 4-bit grayscale, RLE_4 compressed
+  for (let i = 0; i < height; i++) {
     let lineFeed = { length: 0, color: 0 };
 
-    for (let j = 0; j < canvasWidth; j += 1) {
-      const index = (i * canvasWidth + j) * 4;
+    for (let j = 0; j < width; j++) {
+      const index = (i * width + j) * 4;
 
       const grayscaleValue = Math.floor(
         (data[index] * 0.299 +
@@ -85,16 +85,20 @@ function create4BitGrayscaleBMP(
     bmpData.push(lineFeed.length, color8);
 
     // end of line, but not for the last line
-    if (i < canvasHeight - 1) {
+    if (i < height - 1) {
       bmpData.push(0x00, 0x00);
     }
   }
   // end of file
   bmpData.push(0x00, 0x01);
 
+  // now let's encode the bmp
+
+  const headerSize = 54;
   const dataSize = bmpData.length;
   const paletteSize = 16 * 4; // 16 shades of gray * 4 bytes per color entry
-  const fileSize = 54 + paletteSize + dataSize;
+  const dataOffset = headerSize + paletteSize;
+  const fileSize = dataOffset + dataSize;
 
   const bmpBuffer = new Uint8Array(fileSize);
 
@@ -110,22 +114,22 @@ function create4BitGrayscaleBMP(
     0x00,
     0x00,
     0x00, // Reserved
-    0x36,
-    0x00,
-    0x00,
-    0x00, // Bitmap data offset (54 bytes)
+    dataOffset & 0xff,
+    (dataOffset >> 8) & 0xff,
+    (dataOffset >> 16) & 0xff,
+    (dataOffset >> 24) & 0xff, // Bitmap data offset (54 bytes)
     0x28,
     0x00,
     0x00,
     0x00, // Header size (40 bytes)
-    canvasWidth & 0xff, // Width
-    (canvasWidth >> 8) & 0xff,
-    (canvasWidth >> 16) & 0xff,
-    (canvasWidth >> 24) & 0xff,
-    canvasHeight & 0xff, // Height
-    (canvasHeight >> 8) & 0xff,
-    (canvasHeight >> 16) & 0xff,
-    (canvasHeight >> 24) & 0xff,
+    width & 0xff, // Width
+    (width >> 8) & 0xff,
+    (width >> 16) & 0xff,
+    (width >> 24) & 0xff,
+    height & 0xff, // Height
+    (height >> 8) & 0xff,
+    (height >> 16) & 0xff,
+    (height >> 24) & 0xff,
     0x01,
     0x00, // Number of color planes (1)
     0x04,
@@ -146,7 +150,7 @@ function create4BitGrayscaleBMP(
     0x00,
     0x00,
     0x00, // Vertical resolution
-    0x10,
+    0x00,
     0x00,
     0x00,
     0x00, // Palette colors (16)
@@ -158,15 +162,17 @@ function create4BitGrayscaleBMP(
 
   // BMP Palette (Grayscale)
   for (let i = 0; i < 16; i++) {
+    const index = headerSize + i * 4;
     const gray = (255 / 16) * i;
-    bmpBuffer[54 + i * 4] = gray; // Blue
-    bmpBuffer[55 + i * 4] = gray; // Green
-    bmpBuffer[56 + i * 4] = gray; // Red
-    bmpBuffer[57 + i * 4] = 0; // Reserved
+
+    bmpBuffer[index] = gray; // Blue
+    bmpBuffer[index + 1] = gray; // Green
+    bmpBuffer[index + 2] = gray; // Red
+    bmpBuffer[index + 3] = 0; // Reserved
   }
 
-  // Convert RGBA to 4-bit grayscale and store in bmpBuffer
-  bmpBuffer.set(bmpData, 54 + paletteSize);
+  // add bmp data to buffer
+  bmpBuffer.set(bmpData, headerSize + paletteSize);
 
   return bmpBuffer;
 }
