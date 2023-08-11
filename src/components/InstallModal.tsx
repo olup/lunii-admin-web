@@ -81,11 +81,9 @@ export const InstallModal = () => {
                 />
               </>
             ) : (
-              <>
-                <Space h={10} />
-                <Progress h={10} animate value={100} radius="xs" />
-              </>
+              <Progress h={10} animate value={100} radius="xs" />
             )}
+
             <Space h={10} />
             <Center>
               <Button
@@ -97,10 +95,10 @@ export const InstallModal = () => {
               </Button>
             </Center>
             {showTetris && (
-              <>
+              <Center>
                 <Space h={10} />
                 <TetrisBox />
-              </>
+              </Center>
             )}
           </Paper>
         </Center>
