@@ -64,6 +64,7 @@ export function toUint32Array(
     for (let i = 0; i < length; ++i) {
       v[i >> 2] |= bytes[length - 1 - i] << ((i & 3) << 3);
     }
+    v.reverse();
   }
 
   return v;
@@ -92,7 +93,7 @@ export function encryptUint32Array(
   let y, z, sum, e, p, q;
   z = v[n];
   sum = 0;
-  for (q = Math.floor(6 + 52 / length) | 0; q > 0; --q) {
+  for (q = Math.floor(1 + 52 / length) | 0; q > 0; --q) {
     sum += delta;
     e = (sum >>> 2) & 3;
     for (p = 0; p < n; ++p) {
@@ -112,7 +113,7 @@ export function decryptUint32Array(
   const length = v.length;
   const n = length - 1;
   let y, z, sum, e, p;
-  const q = Math.floor(6 + 52 / length);
+  const q = Math.floor(1 + 52 / length);
   y = v[0];
   for (sum = q * delta; sum !== 0; sum -= delta) {
     e = (sum >>> 2) & 3;

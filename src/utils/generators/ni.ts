@@ -108,7 +108,8 @@ export const generateNiBinary = (
     view.setInt16(offset + 4, boolToInt(node.controlSettings.home), true);
     view.setInt16(offset + 6, boolToInt(node.controlSettings.pause), true);
     view.setInt16(offset + 8, boolToInt(node.controlSettings.autoplay), true);
-    offset += 10;
+    view.setInt16(offset + 8, 0, true);
+    offset += 12;
   }
 
   return new Uint8Array(buf);

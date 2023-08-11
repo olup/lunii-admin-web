@@ -27,119 +27,138 @@ export const installPack = async (
   archive: FileSystemFileHandle,
   deviceSepcificKey: Uint8Array
 ) => {
-  const file = await archive.getFile();
-  const root = await getRootDirectory();
+  state.installation.isInstalling.set(true);
 
-  // prepare the directories
-  const tempDir = await root.getDirectoryHandle("temp", { create: true });
-  const zipDir = await tempDir.getDirectoryHandle("zip", { create: true });
-  const outDir = await tempDir.getDirectoryHandle("output", {
-    create: true,
-  });
+  try {
+    const file = await archive.getFile();
+    const root = await getRootDirectory();
 
-  // unzip the archive
-  await unzip(file, zipDir);
+    // prepare the directories
+    const tempDir = await root.getDirectoryHandle("temp", { create: true });
+    const zipDir = await tempDir.getDirectoryHandle("zip", { create: true });
+    const outDir = await tempDir.getDirectoryHandle("output", {
+      create: true,
+    });
 
-  // read the pack.json
-  const packJson = await readFile(await zipDir.getFileHandle("story.json"));
-  const pack: StudioPack = JSON.parse(packJson);
+    // unzip the archive
+    await unzip(file, zipDir);
 
-  // prepare datas
-  const imageAssetList = getImageAssetList(pack);
-  const audioAssetList = getAudioAssetList(pack);
-  const listNodesList = getListNodesIndex(pack.actionNodes);
+    // read the pack.json
+    const packJson = await readFile(await zipDir.getFileHandle("story.json"));
+    const pack: StudioPack = JSON.parse(packJson);
 
-  // generate binaries
-  const imageAssetListBinary = generateBinaryFromAssetIndex(imageAssetList);
-  const audioAssetListBinary = generateBinaryFromAssetIndex(audioAssetList);
+    const packUuid = pack.uuid || pack.stageNodes[0].uuid;
+    const metadata: PackMetadata = {
+      description: pack.description,
+      ref: packUuid.slice(-8).toUpperCase(),
+      title: pack.title,
+      uuid: packUuid,
+      packType: "custom",
+      installSource: "lunii-admin",
+    };
 
-  const niBinary = generateNiBinary(
-    pack,
-    imageAssetList,
-    audioAssetList,
-    listNodesList
-  );
+    state.installation.pack.set(metadata);
 
-  const liBinary = generateLiBinary(listNodesList, pack.stageNodes);
+    // prepare datas
+    const imageAssetList = getImageAssetList(pack);
+    const audioAssetList = getAudioAssetList(pack);
+    const listNodesList = getListNodesIndex(pack.actionNodes);
 
-  const btBinary = generateBtBinary(
-    cipherFirstBlockCommonKey(niBinary),
-    deviceSepcificKey
-  );
+    // generate binaries
+    const riBinary = generateBinaryFromAssetIndex(imageAssetList);
+    const siBinary = generateBinaryFromAssetIndex(audioAssetList);
 
-  // write binaries
-  writeFile(
-    outDir,
-    "ri",
-    cipherFirstBlockCommonKey(imageAssetListBinary),
-    true
-  );
-  writeFile(outDir, "si", audioAssetListBinary, true);
-  writeFile(outDir, "ni", cipherFirstBlockCommonKey(niBinary), true);
-  writeFile(outDir, "li", cipherFirstBlockCommonKey(liBinary), true);
-  writeFile(outDir, "bt", btBinary, true);
-
-  console.log("All binaries were successfully generated");
-
-  // convert and write all images to bmp4
-  for (const asset of imageAssetList) {
-    const handle = await getFileHandleFromPath(zipDir, "assets/" + asset.name);
-    const imageFile = await handle.getFile();
-
-    const bmp = await convertImageToBmp4(imageFile);
-
-    const assetName = asset.position.toString().padStart(8, "0");
-    await writeFile(outDir, "rf/000/" + assetName, bmp, true);
-  }
-  console.log("All images were successfully converted to bmp4");
-
-  // convert and write all audios to mp3
-  for (const asset of audioAssetList) {
-    const handle = await getFileHandleFromPath(zipDir, "assets/" + asset.name);
-    const audioFile = await handle.getFile();
-
-    const mp3 = await convertAudioToMP3(audioFile);
-
-    const assetName = asset.position.toString().padStart(8, "0");
-    await writeFile(outDir, "sf/000/" + assetName, mp3, true);
-    console.log(
-      `Audio file ${asset.position} / ${audioAssetList.length} converted to mp3`
+    const niBinary = generateNiBinary(
+      pack,
+      imageAssetList,
+      audioAssetList,
+      listNodesList
     );
+
+    const liBinary = generateLiBinary(listNodesList, pack.stageNodes);
+
+    const btBinary = generateBtBinary(
+      cipherFirstBlockCommonKey(riBinary),
+      deviceSepcificKey
+    );
+
+    // write binaries
+    await writeFile(outDir, "ni", niBinary, true);
+    await writeFile(outDir, "li", cipherFirstBlockCommonKey(liBinary), true);
+    await writeFile(outDir, "ri", cipherFirstBlockCommonKey(riBinary), true);
+    await writeFile(outDir, "si", cipherFirstBlockCommonKey(siBinary), true);
+    await writeFile(outDir, "bt", btBinary, true);
+
+    console.log("All binaries were successfully generated");
+
+    // convert and write all images to bmp4
+    for (const asset of imageAssetList) {
+      const handle = await getFileHandleFromPath(
+        zipDir,
+        "assets/" + asset.name
+      );
+      const imageFile = await handle.getFile();
+
+      const bmpBlob = await convertImageToBmp4(imageFile);
+      const bmp = new Uint8Array(await bmpBlob.arrayBuffer());
+
+      const cipheredBmp = cipherFirstBlockCommonKey(bmp);
+
+      const assetName = asset.position.toString().padStart(8, "0");
+      await writeFile(outDir, "rf/000/" + assetName, cipheredBmp, true);
+      await writeFile(outDir, "rf/000/" + assetName + ".bmp", bmp, true);
+    }
+    console.log("All images were successfully converted to bmp4");
+
+    // convert and write all audios to mp3
+    for (const asset of audioAssetList) {
+      const handle = await getFileHandleFromPath(
+        zipDir,
+        "assets/" + asset.name
+      );
+      const audioFile = await handle.getFile();
+
+      const mp3 = await convertAudioToMP3(audioFile);
+      const cipheredMp3 = cipherFirstBlockCommonKey(mp3);
+
+      const assetName = asset.position.toString().padStart(8, "0");
+      await writeFile(outDir, "sf/000/" + assetName, cipheredMp3, true);
+      await writeFile(outDir, "sf/000/" + assetName + ".mp3", mp3, true);
+      console.log(
+        `Audio file ${asset.position} / ${audioAssetList.length} converted to mp3`
+      );
+    }
+    console.log("All audios were successfully converted to mp3");
+
+    // write yaml metadata
+    await writeFile(outDir, "md", stringify(metadata), true);
+
+    console.log("Metadata was successfully generated");
+
+    // copy all temp files to the device
+    const deviceHandle = state.luniiHandle.peek();
+    const contentDir = await deviceHandle.getDirectoryHandle(".content");
+    const packDir = await contentDir.getDirectoryHandle(metadata.ref, {
+      create: true,
+    });
+
+    await copyAll(outDir, packDir);
+
+    console.log("Generated files were successfully copied to the device");
+
+    // add pack to device pack index
+    await addPackUuid(deviceHandle, metadata.uuid);
+
+    console.log("Pack uuid was successfully added to the device index");
+
+    // clean
+    await root.removeEntry("temp", { recursive: true });
+
+    console.log("Temporary files were successfully removed");
+
+    state.installation.isInstalling.set(false);
+  } catch (error) {
+    state.installation.isInstalling.set(false);
+    throw error;
   }
-  console.log("All audios were successfully converted to mp3");
-
-  // write yaml metadata
-  const metadata: PackMetadata = {
-    description: pack.description,
-    ref: pack.uuid.slice(-8).toUpperCase(),
-    title: pack.title,
-    uuid: pack.uuid,
-    packType: "custom",
-    installSource: "lunii-admin",
-  };
-
-  await writeFile(outDir, "md", stringify(metadata), true);
-
-  console.log("Metadata was successfully generated");
-
-  // copy all temp files to the device
-  const deviceHandle = state.luniiHandle.peek();
-  const contentDir = await deviceHandle.getDirectoryHandle(".content");
-  const packDir = await contentDir.getDirectoryHandle(metadata.ref, {
-    create: true,
-  });
-
-  await copyAll(outDir, packDir);
-
-  console.log("Generated files were successfully copied to the device");
-
-  // add pack to device pack index
-  await addPackUuid(deviceHandle, metadata.uuid);
-
-  console.log("Pack uuid was successfully added to the device index");
-
-  // clean
-  await root.removeEntry("temp", { recursive: true });
-
-  console.log("Temporary files were successfully removed");
 };

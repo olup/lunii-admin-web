@@ -28,16 +28,13 @@ const treatImage = async (img: HTMLImageElement) => {
   const newWidth = imgWidth * scale;
   const newHeight = imgHeight * scale;
 
-  offscreenCanvas.width = width;
-  offscreenCanvas.height = height;
-
   // flip horizontally
   ctx.scale(1, -1);
   ctx.translate(0, -height);
 
   ctx.drawImage(img, 0, 0, newWidth, newHeight);
 
-  return await create4BitGrayscaleBMP(ctx);
+  return create4BitGrayscaleBMP(ctx);
 };
 
 function create4BitGrayscaleBMP(
@@ -49,7 +46,53 @@ function create4BitGrayscaleBMP(
   const imageData = context.getImageData(0, 0, canvasWidth, canvasHeight);
   const data = imageData.data;
 
-  const dataSize = (canvasWidth * canvasHeight) / 2; // 4 bits per pixel
+  const bmpData: number[] = [];
+
+  // Start of Bitmap Data
+  for (let i = 0; i < canvasHeight; i++) {
+    let lineFeed = { length: 0, color: 0 };
+
+    for (let j = 0; j < canvasWidth; j += 1) {
+      const index = (i * canvasWidth + j) * 4;
+
+      const grayscaleValue = Math.floor(
+        (data[index] * 0.299 +
+          data[index + 1] * 0.587 +
+          data[index + 2] * 0.114) /
+          16
+      );
+
+      if (j === 0) {
+        lineFeed = { length: 1, color: grayscaleValue };
+        continue;
+      }
+
+      if (lineFeed.color == grayscaleValue && lineFeed.length < 255) {
+        // If this is the same color as the last pixel, just augment the length
+        lineFeed.length++;
+      } else {
+        // otherwise, write the code to the array and start a new count
+        const color8 = (lineFeed.color << 4) | lineFeed.color;
+        bmpData.push(lineFeed.length, color8);
+
+        // add a new color
+        lineFeed = { length: 1, color: grayscaleValue };
+      }
+    }
+
+    // commit data
+    const color8 = (lineFeed.color << 4) | lineFeed.color;
+    bmpData.push(lineFeed.length, color8);
+
+    // end of line, but not for the last line
+    if (i < canvasHeight - 1) {
+      bmpData.push(0x00, 0x00);
+    }
+  }
+  // end of file
+  bmpData.push(0x00, 0x01);
+
+  const dataSize = bmpData.length;
   const paletteSize = 16 * 4; // 16 shades of gray * 4 bytes per color entry
   const fileSize = 54 + paletteSize + dataSize;
 
@@ -87,7 +130,7 @@ function create4BitGrayscaleBMP(
     0x00, // Number of color planes (1)
     0x04,
     0x00, // 4 bits per pixel
-    0x00,
+    0x02,
     0x00,
     0x00,
     0x00, // Compression method
@@ -123,25 +166,7 @@ function create4BitGrayscaleBMP(
   }
 
   // Convert RGBA to 4-bit grayscale and store in bmpBuffer
-  let bmpDataIndex = 54 + paletteSize;
-  let bmpDataByte = 0;
-  let bmpDataBitOffset = 4;
-
-  for (let i = 0; i < data.length; i += 4) {
-    const grayscaleValue = Math.floor(
-      (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 16
-    );
-
-    bmpDataByte |= (grayscaleValue & 0xf) << bmpDataBitOffset;
-    bmpDataBitOffset -= 4;
-
-    if (bmpDataBitOffset < 0) {
-      bmpBuffer[bmpDataIndex] = bmpDataByte;
-      bmpDataByte = 0;
-      bmpDataBitOffset = 4;
-      bmpDataIndex++;
-    }
-  }
+  bmpBuffer.set(bmpData, 54 + paletteSize);
 
   return bmpBuffer;
 }

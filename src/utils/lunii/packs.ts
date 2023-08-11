@@ -114,6 +114,9 @@ export const addPackUuid = async (
   uuid: string
 ) => {
   const uuids = await getPackUuids(luniiHandle);
+  if (uuids.includes(uuid)) {
+    throw new Error("Pack already added");
+  }
   uuids.push(uuid);
   await writePackUuids(luniiHandle, uuids);
 };

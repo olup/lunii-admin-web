@@ -2,7 +2,9 @@ import { createFFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
 import { state } from "../../store";
 
-const ffmpeg = createFFmpeg();
+const ffmpeg = createFFmpeg({
+  log: true,
+});
 
 const loadFFmpeg = async () => {
   console.log("Loading ffmpeg");
@@ -25,9 +27,11 @@ export async function convertAudioToMP3(inputFile: File): Promise<Uint8Array> {
     "1",
     "-b:a",
     "128k",
+    "-map_metadata",
+    "-1",
     "output.mp3"
   );
   const data = (await ffmpeg.FS("readFile", "output.mp3")) as Uint8Array;
-  ffmpeg.FS("unlink", "output.mp3");
+  await ffmpeg.FS("unlink", "output.mp3");
   return data;
 }

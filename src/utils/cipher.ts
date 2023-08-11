@@ -32,22 +32,17 @@ export function cipherFirstBlockCommonKey(data: Uint8Array): Uint8Array {
 }
 
 export function decipherFirstBlockCommonKey(data: Uint8Array): Uint8Array {
-  const decipheredData = new Uint8Array(data);
-
   const firstBlockLength = Math.min(512, data.length);
   const firstBlock = data.subarray(0, firstBlockLength);
-
   const dataInt = toUint32Array(firstBlock);
-
   const encryptedIntData = decryptUint32Array(dataInt, keyUint32);
   const decryptedBlock = toUint8Array(encryptedIntData);
-
   if (decryptedBlock === null) {
     throw new Error("Decrypted block is null");
   }
-
-  decipheredData.set(decryptedBlock);
-  return decipheredData;
+  const dataOut = new Uint8Array(data);
+  dataOut.set(decryptedBlock);
+  return dataOut;
 }
 
 export function computeSpecificKeyFromUUID(uuid: Uint8Array): Uint8Array {

@@ -9,6 +9,7 @@ import {
 } from "../utils/lunii/packs";
 import { Header } from "./Header";
 import { Pack } from "./Pack";
+import { InstallModal } from "./InstallModal";
 
 export const ConnectedApp = () => {
   const client = useQueryClient();
@@ -31,7 +32,10 @@ export const ConnectedApp = () => {
       const contentDir = await deviceHandle.getDirectoryHandle(".content");
 
       await removePackUuid(deviceHandle, options.pack.uuid);
-      await contentDir.removeEntry(options.pack.metadata!.ref);
+
+      await contentDir.removeEntry(options.pack.metadata!.ref, {
+        recursive: true,
+      });
 
       console.log("Pack removed");
     },
@@ -40,18 +44,21 @@ export const ConnectedApp = () => {
   });
 
   return (
-    <Container>
-      <Header />
-      <Space h={10} />
-      {data?.map((pack, i) => (
-        <Pack
-          key={pack.uuid}
-          pack={pack}
-          onMoveUp={() => movePack({ from: i, to: i - 1 })}
-          onMoveDown={() => movePack({ from: i, to: i + 1 })}
-          onRemove={() => removePack({ pack })}
-        />
-      ))}
-    </Container>
+    <>
+      <Container>
+        <Header />
+        <Space h={10} />
+        {data?.map((pack, i) => (
+          <Pack
+            key={pack.uuid}
+            pack={pack}
+            onMoveUp={() => movePack({ from: i, to: i - 1 })}
+            onMoveDown={() => movePack({ from: i, to: i + 1 })}
+            onRemove={() => removePack({ pack })}
+          />
+        ))}
+      </Container>
+      <InstallModal />
+    </>
   );
 };
