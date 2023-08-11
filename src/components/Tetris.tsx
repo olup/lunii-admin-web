@@ -1,5 +1,4 @@
 import { Global, css } from "@emotion/react";
-import { Flex } from "@mantine/core";
 import { Suspense, lazy } from "react";
 
 const Tetris = lazy(() => import("react-tetris"));

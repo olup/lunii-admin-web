@@ -1,4 +1,6 @@
-import { parse } from "yaml";
+import { parse, stringify } from "yaml";
+import { getLuniiStoreDb } from "../db";
+import { writeFile } from "../fs";
 import { PackMetadata } from "./types";
 
 export type PackShell = {
@@ -74,6 +76,18 @@ export const getPacksMetadata = async (
   return packsMetadata;
 };
 
+export const savePackMetadata = async (
+  luniiHandle: FileSystemDirectoryHandle,
+  uuid: string,
+  metadata: PackMetadata
+) => {
+  const contentHandle = await luniiHandle.getDirectoryHandle(".content");
+  const packDirectoryHandle = await contentHandle.getDirectoryHandle(
+    uuid.slice(-8).toUpperCase()
+  );
+  await writeFile(packDirectoryHandle, "md", stringify(metadata));
+};
+
 export const writePackUuids = async (
   luniiHandle: FileSystemDirectoryHandle,
   uuids: string[]
@@ -133,4 +147,24 @@ export const removePackUuid = async (
   uuids.splice(index, 1);
   await writePackUuids(luniiHandle, uuids);
   console.log("Uuid removed from index: ", uuid);
+};
+
+export const syncPacksMetadataFromStore = async (
+  luniHandle: FileSystemDirectoryHandle
+) => {
+  const luniiStoreEntries = await getLuniiStoreDb();
+  const packs = await getPacksMetadata(luniHandle);
+  packs.forEach(async (pack) => {
+    if (pack.metadata) return;
+    const entry = luniiStoreEntries.find((entry) => entry.uuid === pack.uuid);
+    if (!entry) return;
+    const metadata: PackMetadata = {
+      description: entry.subtitle,
+      title: entry.title,
+      uuid: entry.uuid,
+      ref: entry.uuid.slice(-8).toUpperCase(),
+      packType: "lunii",
+    };
+    await savePackMetadata(luniHandle, pack.uuid, metadata);
+  });
 };

@@ -22,6 +22,7 @@ import { generateNiBinary } from "../generators/ni";
 import { unzip } from "../zip";
 import { addPackUuid } from "./packs";
 import { PackMetadata, StudioPack } from "./types";
+import { BLANK_MP3_FILE } from "..";
 
 export const installPack = async (
   archive: FileSystemFileHandle,
@@ -50,9 +51,9 @@ export const installPack = async (
 
     const packUuid = pack.uuid || pack.stageNodes[0].uuid;
     const metadata: PackMetadata = {
-      description: pack.description,
+      description: pack.description || "",
       ref: packUuid.slice(-8).toUpperCase(),
-      title: pack.title,
+      title: pack.title || "",
       uuid: packUuid,
       packType: "custom",
       installSource: "lunii-admin",
@@ -120,6 +121,16 @@ export const installPack = async (
 
     // convert and write all audios to mp3
     for (const asset of audioAssetList) {
+      const assetName = asset.position.toString().padStart(8, "0");
+
+      // insert blank mp3 when we find an empty audio
+      if (asset.name === "BLANK_MP3") {
+        const cipheredMp3 = cipherFirstBlockCommonKey(BLANK_MP3_FILE);
+        await writeFile(outDir, "sf/000/" + assetName, cipheredMp3, true);
+        continue;
+      }
+
+      // otherwise convert the file
       const handle = await getFileHandleFromPath(
         zipDir,
         "assets/" + asset.name
@@ -129,7 +140,6 @@ export const installPack = async (
       const mp3 = await convertAudioToMP3(audioFile);
       const cipheredMp3 = cipherFirstBlockCommonKey(mp3);
 
-      const assetName = asset.position.toString().padStart(8, "0");
       await writeFile(outDir, "sf/000/" + assetName, cipheredMp3, true);
       await writeFile(outDir, "sf/000/" + assetName + "-debug.mp3", mp3, true); //debug
       console.log(

@@ -65,6 +65,13 @@ export const getAudioAssetList = (pack: StudioPack) => {
         position,
         name: stageNode.audio,
       });
+    } else {
+      imageAssetList.push({
+        nodeUuid: stageNode.uuid,
+        position,
+        name: "BLANK_MP3",
+      });
+      stageNode.audio = "BLANK_MP3";
     }
     position++;
   });

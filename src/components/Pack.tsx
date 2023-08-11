@@ -33,12 +33,11 @@ export const Pack: FC<{
       children: (
         <Text size="sm">
           Êtes vous sûr de vouloir supprimer le pack{" "}
-          <Code>{pack.metadata?.title.slice(0, 20)}</Code> ? Cette action est
-          irréversible.
+          <Code>{pack.metadata?.title}</Code> ? Cette action est irréversible.
         </Text>
       ),
       labels: { confirm: "Supprimer", cancel: "Annuler" },
-      confirmProps: { color: "red" },
+      confirmProps: { color: "red", rightIcon: <IconTrash size={14} /> },
       onCancel: () => {},
       onConfirm: () => onRemove?.(),
     });
@@ -63,7 +62,7 @@ export const Pack: FC<{
               openDelay={500}
               multiline
               width={300}
-              label={`Vous pouvez importer les métadonnées depuis le Lunii Store ou la base de donnée de STUdio. A faire une fois. (Coming soon)`}
+              label={`Vous pouvez importer les métadonnées depuis le Lunii Store ou la base de donnée de STUdio. A faire une fois.`}
             >
               <Badge ml={5} color="yellow">
                 Métadonnée manquantes

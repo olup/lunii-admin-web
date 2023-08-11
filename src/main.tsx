@@ -6,6 +6,7 @@ import { enableReactUse } from "@legendapp/state/config/enableReactUse";
 import { MantineProvider } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
 import { QueryClient, QueryClientProvider } from "react-query";
+import { Notifications } from "@mantine/notifications";
 enableReactUse();
 
 const queryClient = new QueryClient();
@@ -15,6 +16,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <MantineProvider>
         <ModalsProvider>
+          <Notifications />
           <App />
         </ModalsProvider>
       </MantineProvider>

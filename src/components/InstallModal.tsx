@@ -9,7 +9,13 @@ import {
   Space,
   Text,
 } from "@mantine/core";
-import { IconChevronRight } from "@tabler/icons-react";
+import {
+  IconChevronRight,
+  IconClock,
+  IconClock2,
+  IconClockBolt,
+  IconClockCog,
+} from "@tabler/icons-react";
 import { useState } from "react";
 import { state } from "../store";
 import { TetrisBox } from "./Tetris";
@@ -52,7 +58,7 @@ export const InstallModal = () => {
             )}
             <Space h={10} />
             <Flex>
-              <IconChevronRight />
+              <IconClockCog />
               <Space w={5} />
               <Text>{stepToLabel(installation.step)}</Text>
             </Flex>
