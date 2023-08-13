@@ -1,14 +1,18 @@
 import { ActionIcon, Badge, Button, Flex, Space, Tooltip } from "@mantine/core";
 import {
-  IconBrandDiscordFilled,
   IconBrandGithubFilled,
   IconExternalLink,
+  IconMoon,
   IconRefresh,
+  IconSun,
   IconUpload,
 } from "@tabler/icons-react";
 import { useInstallPackMutation, useSyncMetadataMutation } from "../queries";
+import { state, switchColorScheme } from "../store";
 
 export const Header = () => {
+  const colorScheme = state.colorScheme.use();
+
   const { mutate: doInstallPack } = useInstallPackMutation();
 
   const { mutate: syncMetadata } = useSyncMetadataMutation();
@@ -49,6 +53,14 @@ export const Header = () => {
 
       <Badge>{__COMMIT_HASH__}</Badge>
       <Space w={10} />
+      <ActionIcon variant="light" size="lg" onClick={switchColorScheme}>
+        {colorScheme === "dark" ? (
+          <IconSun size={18} />
+        ) : (
+          <IconMoon size={18} />
+        )}
+      </ActionIcon>
+      <Space w={10} />
       <ActionIcon
         variant="light"
         size="lg"
@@ -58,7 +70,7 @@ export const Header = () => {
       >
         <IconBrandGithubFilled size={18} />
       </ActionIcon>
-      <Space w={10} />
+      {/* <Space w={10} />
       <ActionIcon
         variant="light"
         size="lg"
@@ -67,7 +79,7 @@ export const Header = () => {
         target="_blank"
       >
         <IconBrandDiscordFilled size={18} />
-      </ActionIcon>
+      </ActionIcon> */}
     </Flex>
   );
 };
