@@ -6,47 +6,12 @@ import {
   IconRefresh,
   IconUpload,
 } from "@tabler/icons-react";
-import { useMutation, useQueryClient } from "react-query";
-import { state } from "../store";
-import { installPack } from "../utils/lunii/installPack";
-import { syncPacksMetadataFromStore } from "../utils/lunii/packs";
-import { notifications } from "@mantine/notifications";
+import { useInstallPackMutation, useSyncMetadataMutation } from "../queries";
 
 export const Header = () => {
-  const client = useQueryClient();
+  const { mutate: doInstallPack } = useInstallPackMutation();
 
-  const { mutate: doInstallPack } = useMutation({
-    mutationFn: async () => {
-      const [fileHandle] = await window.showOpenFilePicker({
-        types: [{ accept: { "application/zip": [".zip"] } }],
-        multiple: false,
-      });
-      const device = state.device.peek()!;
-      await installPack(fileHandle, device.specificKey);
-    },
-    onSuccess: () =>
-      notifications.show({
-        title: "Installation terminée",
-        message: "Le pack a été installé avec succès",
-        color: "green",
-      }),
-    onSettled: () => {
-      client.invalidateQueries("packs");
-    },
-  });
-
-  const { mutate: syncMetadata } = useMutation({
-    mutationFn: () => syncPacksMetadataFromStore(state.luniiHandle.peek()!),
-    onSuccess: () =>
-      notifications.show({
-        title: "Synchronisation terminée",
-        message: "Les métadonnées ont été synchronisées avec succès",
-        color: "green",
-      }),
-    onSettled: () => {
-      client.invalidateQueries("packs");
-    },
-  });
+  const { mutate: syncMetadata } = useSyncMetadataMutation();
 
   return (
     <Flex py={5} align="center">

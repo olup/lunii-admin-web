@@ -1,48 +1,22 @@
 import { Center, Container, Loader, Space, Text } from "@mantine/core";
-import { useMutation, useQuery, useQueryClient } from "react-query";
-import { state } from "../store";
 import {
-  PackShell,
-  changePackPosition,
-  getPacksMetadata,
-  removePackUuid,
-} from "../utils/lunii/packs";
+  useGetPacksQuery,
+  useRemovePackMutation,
+  useReorderPackMutation,
+} from "../queries";
+import { state } from "../store";
 import { Header } from "./Header";
-import { Pack } from "./Pack";
 import { InstallModal } from "./InstallModal";
+import { Pack } from "./Pack";
 
 export const ConnectedApp = () => {
-  const client = useQueryClient();
   const isFfmpegLoaded = state.isFfmpegLoaded.use();
 
-  const { data } = useQuery(["packs"], () =>
-    getPacksMetadata(state.luniiHandle.peek()!)
-  );
+  const { data } = useGetPacksQuery();
 
-  const { mutate: movePack } = useMutation({
-    mutationKey: "reorderPacks",
-    mutationFn: async (options: { from: number; to: number }) =>
-      changePackPosition(state.luniiHandle.peek()!, options.from, options.to),
-    onSuccess: () => client.invalidateQueries("packs"),
-  });
+  const { mutate: movePack } = useReorderPackMutation();
 
-  const { mutate: removePack } = useMutation({
-    mutationKey: "reorderPacks",
-    mutationFn: async (options: { pack: PackShell }) => {
-      const deviceHandle = state.luniiHandle.peek()!;
-      const contentDir = await deviceHandle.getDirectoryHandle(".content");
-
-      await removePackUuid(deviceHandle, options.pack.uuid);
-
-      await contentDir.removeEntry(options.pack.metadata!.ref, {
-        recursive: true,
-      });
-
-      console.log("Pack removed");
-    },
-    onError: (err) => console.error(err),
-    onSuccess: () => client.invalidateQueries("packs"),
-  });
+  const { mutate: removePack } = useRemovePackMutation();
 
   if (!isFfmpegLoaded)
     return (
