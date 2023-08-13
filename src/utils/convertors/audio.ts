@@ -1,19 +1,26 @@
-import { createFFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile } from "@ffmpeg/util";
+import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import { state } from "../../store";
 
-const ffmpeg = createFFmpeg({
-  // log: true,
-  progress: (p) => {
-    state.installation.audioFileGenerationProgress.conversionProgress.set(
-      p.ratio * 100
-    );
-  },
+const ffmpeg = new FFmpeg();
+
+ffmpeg.on("progress", (p) => {
+  state.installation.audioFileGenerationProgress.conversionProgress.set(
+    p.progress * 100
+  );
 });
 
+const baseURL = "https://unpkg.com/@ffmpeg/core-mt@0.12.2/dist/esm";
 const loadFFmpeg = async () => {
   console.log("Loading ffmpeg");
-  await ffmpeg.load();
+  await ffmpeg.load({
+    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
+    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
+    workerURL: await toBlobURL(
+      `${baseURL}/ffmpeg-core.worker.js`,
+      "text/javascript"
+    ),
+  });
   console.log("FFmpeg loaded");
   state.isFfmpegLoaded.set(true);
 };
@@ -22,8 +29,8 @@ loadFFmpeg();
 
 // convert audio to mp3 44100Hz 129khz mono
 export async function convertAudioToMP3(inputFile: File): Promise<Uint8Array> {
-  await ffmpeg.FS("writeFile", inputFile.name, await fetchFile(inputFile));
-  await ffmpeg.run(
+  await ffmpeg.writeFile(inputFile.name, await fetchFile(inputFile));
+  await ffmpeg.exec([
     "-i",
     inputFile.name,
     "-ar",
@@ -34,9 +41,9 @@ export async function convertAudioToMP3(inputFile: File): Promise<Uint8Array> {
     "128k",
     "-map_metadata",
     "-1",
-    "output.mp3"
-  );
-  const data = (await ffmpeg.FS("readFile", "output.mp3")) as Uint8Array;
-  await ffmpeg.FS("unlink", "output.mp3");
+    "output.mp3",
+  ]);
+  const data = (await ffmpeg.readFile("output.mp3")) as Uint8Array;
+  await ffmpeg.deleteFile("output.mp3");
   return data;
 }
