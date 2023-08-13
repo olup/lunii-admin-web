@@ -1,4 +1,4 @@
-import { Container, Space } from "@mantine/core";
+import { Center, Container, Loader, Space, Text } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { state } from "../store";
 import {
@@ -13,6 +13,7 @@ import { InstallModal } from "./InstallModal";
 
 export const ConnectedApp = () => {
   const client = useQueryClient();
+  const isFfmpegLoaded = state.isFfmpegLoaded.use();
 
   const { data } = useQuery(["packs"], () =>
     getPacksMetadata(state.luniiHandle.peek()!)
@@ -42,6 +43,14 @@ export const ConnectedApp = () => {
     onError: (err) => console.error(err),
     onSuccess: () => client.invalidateQueries("packs"),
   });
+
+  if (!isFfmpegLoaded)
+    return (
+      <Center h={400} style={{ flexDirection: "column" }}>
+        <Text mb={20}>Encore un instant pour charger les dépendances...</Text>
+        <Loader />
+      </Center>
+    );
 
   return (
     <>
