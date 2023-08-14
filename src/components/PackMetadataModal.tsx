@@ -17,6 +17,9 @@ export const PackMetadataModal: FC<{
 
   return (
     <Modal
+      overlayProps={{
+        blur: 3,
+      }}
       opened={true}
       onClose={onClose}
       title={`Detail du pack ` + uuidToRef(pack.uuid)}

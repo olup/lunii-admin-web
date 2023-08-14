@@ -155,6 +155,8 @@ export const syncPacksMetadataFromStore = async (
   packs.forEach(async (pack) => {
     if (pack.metadata) return;
 
+    console.log("Syncing pack: ", pack.uuid);
+
     const entry = luniiStoreEntries.find((entry) => entry.uuid === pack.uuid);
     if (!entry) return;
     const metadata: PackMetadata = {

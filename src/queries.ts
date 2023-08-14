@@ -1,15 +1,15 @@
+import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "react-query";
+import { state } from "./store";
+import { uuidToRef } from "./utils/generators";
+import { installPack } from "./utils/lunii/installPack";
 import {
-  PackShell,
   changePackPosition,
   getPackFirstRaster,
   getPacksMetadata,
   removePackUuid,
   syncPacksMetadataFromStore,
 } from "./utils/lunii/packs";
-import { state } from "./store";
-import { installPack } from "./utils/lunii/installPack";
-import { notifications } from "@mantine/notifications";
 
 export const useGetPacksQuery = () =>
   useQuery(["packs"], () => getPacksMetadata(state.luniiHandle.peek()!));
@@ -34,13 +34,15 @@ export const useRemovePackMutation = () => {
   const client = useQueryClient();
   return useMutation({
     mutationKey: "reorderPacks",
-    mutationFn: async (options: { pack: PackShell }) => {
+    mutationFn: async (packUuid: string) => {
       const deviceHandle = state.luniiHandle.peek()!;
       const contentDir = await deviceHandle.getDirectoryHandle(".content");
 
-      await removePackUuid(deviceHandle, options.pack.uuid);
+      // remove pack uuid from the device index
+      await removePackUuid(deviceHandle, packUuid);
 
-      await contentDir.removeEntry(options.pack.metadata!.ref, {
+      // remove pack content
+      await contentDir.removeEntry(uuidToRef(packUuid), {
         recursive: true,
       });
 

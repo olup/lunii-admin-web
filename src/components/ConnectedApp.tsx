@@ -37,7 +37,7 @@ export const ConnectedApp = () => {
             pack={pack}
             onMoveUp={() => movePack({ from: i, to: i - 1 })}
             onMoveDown={() => movePack({ from: i, to: i + 1 })}
-            onRemove={() => removePack({ pack })}
+            onRemove={() => removePack(pack.uuid)}
           />
         ))}
       </Container>

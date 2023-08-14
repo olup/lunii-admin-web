@@ -13,6 +13,7 @@ import { IconClockCog } from "@tabler/icons-react";
 import { useState } from "react";
 import { state } from "../store";
 import { TetrisBox } from "./Tetris";
+import { useColorScheme } from "@mantine/hooks";
 
 const stepToLabel = (step: string) => {
   switch (step) {
@@ -40,7 +41,7 @@ export const InstallModal = () => {
 
   if (installation.isInstalling)
     return (
-      <Overlay color="#fff" blur={3}>
+      <Overlay blur={3}>
         <Space h={100} />
         <Center>
           <Paper shadow="md" p="lg" radius="sm" w={500} withBorder>
