@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import {
   PackShell,
   changePackPosition,
+  getPackFirstRaster,
   getPacksMetadata,
   removePackUuid,
   syncPacksMetadataFromStore,
@@ -105,3 +106,9 @@ export const useSyncMetadataMutation = () => {
     },
   });
 };
+
+export const useGetPackFirstRasterQuery = (uuid: string) =>
+  useQuery(["pack-raster", uuid], () => {
+    const deviceHandle = state.luniiHandle.peek()!;
+    return getPackFirstRaster(deviceHandle, uuid);
+  });

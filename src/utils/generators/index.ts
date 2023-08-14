@@ -77,3 +77,5 @@ export const getAudioAssetList = (pack: StudioPack) => {
   });
   return imageAssetList;
 };
+
+export const uuidToRef = (uuid: string) => uuid.slice(-8).toUpperCase();

@@ -38,6 +38,9 @@ dependencies:
   '@tabler/icons-react':
     specifier: ^2.30.0
     version: 2.30.0(react@18.2.0)
+  '@types/bmp-js':
+    specifier: ^0.1.0
+    version: 0.1.0
   add:
     specifier: ^2.0.6
     version: 2.0.6
@@ -923,13 +926,18 @@ packages:
     resolution: {integrity: sha512-tvtmkI4ALjKThVVORh++sB9JnkFY7eGInKxNy+Df7WVQiF7T85tlvGADzlgX4Ic+CK5MIUzZ0jhOlQ/RRlgXpg==}
     dev: false
 
+  /@types/bmp-js@0.1.0:
+    resolution: {integrity: sha512-uMU85ROcmlY1f4mVPTlNodRXa6Z5f0AIxvv5b0pvjty3KNg7ljf5lNSspHgaF6iFDCiGpLQmJna+VwEpUC9TyA==}
+    dependencies:
+      '@types/node': 20.4.8
+    dev: false
+
   /@types/json-schema@7.0.12:
     resolution: {integrity: sha512-Hr5Jfhc9eYOQNPYO5WLDq/n4jqijdHNlDXjuAQkkt+mWdQR+XJToOHrsD4cPaMXpn6KO7y2+wM8AZEs8VpBLVA==}
     dev: true
 
   /@types/node@20.4.8:
     resolution: {integrity: sha512-0mHckf6D2DiIAzh8fM8f3HQCvMKDpK94YQ0DSVkfWTG9BZleYIWudw9cJxX8oCk9bM+vAkDyujDV6dmKHbvQpg==}
-    dev: true
 
   /@types/parse-json@4.0.0:
     resolution: {integrity: sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==}

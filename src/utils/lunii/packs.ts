@@ -1,7 +1,9 @@
 import { parse, stringify } from "yaml";
 import { getLuniiStoreDb } from "../db";
-import { writeFile } from "../fs";
+import { getFileHandleFromPath, writeFile } from "../fs";
 import { PackMetadata } from "./types";
+import { decipherFirstBlockCommonKey } from "../cipher";
+import { uuidToRef } from "../generators";
 
 export type PackShell = {
   uuid: string;
@@ -53,7 +55,7 @@ export const getPacksMetadata = async (
     packUuids.map(async (uuid) => {
       try {
         const packDirectoryHandle = await contentHandle.getDirectoryHandle(
-          uuid.slice(-8).toUpperCase()
+          uuidToRef(uuid)
         );
         const packMetadataHandle = await packDirectoryHandle.getFileHandle(
           "md"
@@ -83,7 +85,7 @@ export const savePackMetadata = async (
 ) => {
   const contentHandle = await luniiHandle.getDirectoryHandle(".content");
   const packDirectoryHandle = await contentHandle.getDirectoryHandle(
-    uuid.slice(-8).toUpperCase()
+    uuidToRef(uuid)
   );
   await writeFile(packDirectoryHandle, "md", stringify(metadata));
 };
@@ -162,9 +164,35 @@ export const syncPacksMetadataFromStore = async (
       description: entry.subtitle,
       title: entry.title,
       uuid: entry.uuid,
-      ref: entry.uuid.slice(-8).toUpperCase(),
+      ref: uuidToRef(entry.uuid),
       packType: "lunii",
     };
     await savePackMetadata(luniHandle, pack.uuid, metadata);
   });
+};
+
+export const getPackFirstRaster = async (
+  handle: FileSystemDirectoryHandle,
+  uuid: string
+) => {
+  const ref = uuidToRef(uuid);
+  const riHandle = await getFileHandleFromPath(handle, `.content/${ref}/ri`);
+  const ri = await riHandle
+    .getFile()
+    .then((f) => f.arrayBuffer())
+    .then((ab) => new Uint8Array(ab));
+  const decodedRi = decipherFirstBlockCommonKey(ri);
+  const fistRasterAdress = new TextDecoder()
+    .decode(decodedRi.slice(0, 12))
+    .replace("\\", "/");
+  const rasterFile = await getFileHandleFromPath(
+    handle,
+    `.content/${ref}/rf/${fistRasterAdress}`
+  );
+  const raster = await rasterFile
+    .getFile()
+    .then((f) => f.arrayBuffer())
+    .then((ab) => new Uint8Array(ab));
+
+  return decipherFirstBlockCommonKey(raster);
 };

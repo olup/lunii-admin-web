@@ -38,13 +38,13 @@ export const resetInstallationState = () => {
   });
 };
 
-// MAnage persistence of the theme
-
 export const switchColorScheme = () => {
   state.colorScheme.set(
     state.colorScheme.peek() === "light" ? "dark" : "light"
   );
 };
+
+// MAnage persistence of the theme
 
 configureObservablePersistence({
   persistLocal: ObservablePersistLocalStorage,

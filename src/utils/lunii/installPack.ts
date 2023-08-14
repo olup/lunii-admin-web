@@ -7,13 +7,14 @@ import {
   copyAll,
   getFileHandleFromPath,
   getRootDirectory,
-  readFile,
+  readFileAsText,
   writeFile,
 } from "../fs";
 import {
   getAudioAssetList,
   getImageAssetList,
   getListNodesIndex,
+  uuidToRef,
 } from "../generators";
 import { generateBinaryFromAssetIndex } from "../generators/asset";
 import { generateBtBinary } from "../generators/bt";
@@ -46,13 +47,15 @@ export const installPack = async (
     await unzip(file, zipDir);
 
     // read the pack.json
-    const packJson = await readFile(await zipDir.getFileHandle("story.json"));
+    const packJson = await readFileAsText(
+      await zipDir.getFileHandle("story.json")
+    );
     const pack: StudioPack = JSON.parse(packJson);
 
     const packUuid = pack.uuid || pack.stageNodes[0].uuid;
     const metadata: PackMetadata = {
       description: pack.description || "",
-      ref: packUuid.slice(-8).toUpperCase(),
+      ref: uuidToRef(packUuid),
       title: pack.title || "",
       uuid: packUuid,
       packType: "custom",

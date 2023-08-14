@@ -36,7 +36,7 @@ export async function getFileHandleFromPath(
 
 export const getRootDirectory = () => navigator.storage.getDirectory();
 
-export const readFile = (file: FileSystemFileHandle) => {
+export const readFileAsText = (file: FileSystemFileHandle) => {
   return file.getFile().then((file) => file.text());
 };
 
