@@ -1,6 +1,6 @@
 import { parse, stringify } from "yaml";
 import { getLuniiStoreDb } from "../db";
-import { getFileHandleFromPath, writeFile } from "../fs";
+import { getFileHandleFromPath, readFileAsText, writeFile } from "../fs";
 import { PackMetadata } from "./types";
 import { decipherFirstBlockCommonKey } from "../cipher";
 import { uuidToRef } from "../generators";
@@ -49,19 +49,14 @@ export const getPacksMetadata = async (
   luniiHandle: FileSystemDirectoryHandle
 ): Promise<PackShell[]> => {
   const packUuids = await getPackUuids(luniiHandle);
-  const contentHandle = await luniiHandle.getDirectoryHandle(".content");
-
   const packsMetadata = await Promise.all(
     packUuids.map(async (uuid) => {
       try {
-        const packDirectoryHandle = await contentHandle.getDirectoryHandle(
-          uuidToRef(uuid)
+        const packMetadataHandle = await getFileHandleFromPath(
+          luniiHandle,
+          `.content/${uuidToRef(uuid)}/md`
         );
-        const packMetadataHandle = await packDirectoryHandle.getFileHandle(
-          "md"
-        );
-        const packMetadataFile = await packMetadataHandle.getFile();
-        const packMetadataYaml = await packMetadataFile.text();
+        const packMetadataYaml = await readFileAsText(packMetadataHandle);
         return {
           uuid,
           metadata: parse(packMetadataYaml) as PackMetadata,
@@ -158,6 +153,8 @@ export const syncPacksMetadataFromStore = async (
   console.log(luniiStoreEntries);
   const packs = await getPacksMetadata(luniHandle);
   packs.forEach(async (pack) => {
+    if (pack.metadata) return;
+
     const entry = luniiStoreEntries.find((entry) => entry.uuid === pack.uuid);
     if (!entry) return;
     const metadata: PackMetadata = {
