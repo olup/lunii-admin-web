@@ -155,9 +155,9 @@ export const syncPacksMetadataFromStore = async (
   luniHandle: FileSystemDirectoryHandle
 ) => {
   const luniiStoreEntries = await getLuniiStoreDb();
+  console.log(luniiStoreEntries);
   const packs = await getPacksMetadata(luniHandle);
   packs.forEach(async (pack) => {
-    if (pack.metadata) return;
     const entry = luniiStoreEntries.find((entry) => entry.uuid === pack.uuid);
     if (!entry) return;
     const metadata: PackMetadata = {
