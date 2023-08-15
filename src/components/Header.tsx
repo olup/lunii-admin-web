@@ -20,7 +20,7 @@ export const Header = () => {
   return (
     <Flex py={5} align="center">
       <Button
-        leftIcon={<IconUpload size={18} />}
+        leftIcon={<IconUpload size="1rem" />}
         onClick={() => doInstallPack()}
       >
         Installer un pack
@@ -32,7 +32,7 @@ export const Header = () => {
       >
         <Button
           variant="outline"
-          leftIcon={<IconRefresh size={18} />}
+          leftIcon={<IconRefresh size="1rem" />}
           onClick={() => syncMetadata()}
         >
           Synchroniser les métadonnées
@@ -40,7 +40,7 @@ export const Header = () => {
       </Tooltip>
       <Space w={10} />
       <Button
-        leftIcon={<IconExternalLink size={18} />}
+        leftIcon={<IconExternalLink size="1rem" />}
         component="a"
         href="https://lunii-admin-builder.pages.dev"
         target="_blank"
@@ -55,9 +55,9 @@ export const Header = () => {
       <Space w={10} />
       <ActionIcon variant="light" size="lg" onClick={switchColorScheme}>
         {colorScheme === "dark" ? (
-          <IconSun size={18} />
+          <IconSun size="1rem" />
         ) : (
-          <IconMoon size={18} />
+          <IconMoon size="1rem" />
         )}
       </ActionIcon>
       <Space w={10} />
@@ -68,7 +68,7 @@ export const Header = () => {
         href="https://github.com/olup/lunii-admin-web"
         target="_blank"
       >
-        <IconBrandGithubFilled size={18} />
+        <IconBrandGithubFilled size="1rem" />
       </ActionIcon>
       {/* <Space w={10} />
       <ActionIcon
@@ -78,7 +78,7 @@ export const Header = () => {
         href=""
         target="_blank"
       >
-        <IconBrandDiscordFilled size={18} />
+        <IconBrandDiscordFilled size="1rem" />
       </ActionIcon> */}
     </Flex>
   );

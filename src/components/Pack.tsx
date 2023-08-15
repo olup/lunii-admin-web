@@ -44,7 +44,7 @@ export const Pack: FC<{
         </Text>
       ),
       labels: { confirm: "Supprimer", cancel: "Annuler" },
-      confirmProps: { color: "red", rightIcon: <IconTrash size={14} /> },
+      confirmProps: { color: "red", rightIcon: <IconTrash size="1rem" /> },
       onCancel: () => {},
       onConfirm: () => removePack(pack.uuid),
     });
@@ -65,7 +65,7 @@ export const Pack: FC<{
             color="blue"
             onClick={() => movePack({ from: position, to: position - 1 })}
           >
-            <IconArrowUp size={18} />
+            <IconArrowUp size="1rem" />
           </ActionIcon>
           <Space h={5} />
           <ActionIcon
@@ -73,7 +73,7 @@ export const Pack: FC<{
             color="blue"
             onClick={() => movePack({ from: position, to: position + 1 })}
           >
-            <IconArrowDown size={18} />
+            <IconArrowDown size="1rem" />
           </ActionIcon>
         </Box>
         <Space w={20} />
@@ -102,12 +102,12 @@ export const Pack: FC<{
           <Menu position="bottom-start">
             <Menu.Target>
               <ActionIcon variant="subtle" color="blue">
-                <IconDots size={18} />
+                <IconDots size="1rem" />
               </ActionIcon>
             </Menu.Target>
             <Menu.Dropdown>
               <Menu.Item
-                icon={<IconInfoCircle size={12} />}
+                icon={<IconInfoCircle size="1rem" />}
                 onClick={() => setMetadataModalOpen(true)}
               >
                 Details
@@ -120,7 +120,7 @@ export const Pack: FC<{
               </Menu.Item>
               <Menu.Item
                 color="red"
-                icon={<IconTrash size={12} />}
+                icon={<IconTrash size="1rem" />}
                 onClick={() => openRemoveModal()}
               >
                 Supprimer
