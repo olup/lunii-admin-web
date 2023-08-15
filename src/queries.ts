@@ -8,8 +8,10 @@ import {
   getPackFirstRaster,
   getPacksMetadata,
   removePackUuid,
+  savePackMetadata,
   syncPacksMetadataFromStore,
 } from "./utils/lunii/packs";
+import { PackMetadata } from "./utils/lunii/types";
 
 export const useGetPacksQuery = () =>
   useQuery(["packs"], () => getPacksMetadata(state.luniiHandle.peek()!));
@@ -114,3 +116,25 @@ export const useGetPackFirstRasterQuery = (uuid: string) =>
     const deviceHandle = state.luniiHandle.peek()!;
     return getPackFirstRaster(deviceHandle, uuid);
   });
+
+export const useSavePackMetadataMutation = () => {
+  const client = useQueryClient();
+  return useMutation({
+    mutationKey: "updatePackMetadata",
+    onSettled: () => {
+      client.invalidateQueries("packs");
+    },
+    mutationFn: async ({
+      uuid,
+      metadata,
+      shouldCreate = false,
+    }: {
+      uuid: string;
+      metadata: PackMetadata;
+      shouldCreate?: boolean;
+    }) => {
+      const deviceHandle = state.luniiHandle.peek()!;
+      await savePackMetadata(deviceHandle, uuid, metadata, shouldCreate);
+    },
+  });
+};

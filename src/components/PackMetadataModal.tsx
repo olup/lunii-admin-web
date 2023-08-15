@@ -1,7 +1,24 @@
-import { Box, Image, Modal, Space, TextInput, Textarea } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Code,
+  Flex,
+  Image,
+  Modal,
+  Space,
+  TextInput,
+  Textarea,
+} from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { IconCheck } from "@tabler/icons-react";
 import { FC } from "react";
-import { useGetPackFirstRasterQuery, useGetPacksQuery } from "../queries";
+import {
+  useGetPackFirstRasterQuery,
+  useGetPacksQuery,
+  useSavePackMetadataMutation,
+} from "../queries";
 import { uuidToRef } from "../utils/generators";
+import { PackMetadata } from "../utils/lunii/types";
 
 export const PackMetadataModal: FC<{
   packUuid: string;
@@ -12,6 +29,15 @@ export const PackMetadataModal: FC<{
   // get pack details from the list of all pack (should be cached)
   const { data } = useGetPacksQuery();
   const pack = data?.find((pack) => pack.uuid === packUuid);
+
+  const form = useForm({
+    initialValues: {
+      title: pack?.metadata?.title || "",
+      description: pack?.metadata?.description || "",
+    },
+  });
+
+  const { mutate: saveMetadata, isLoading } = useSavePackMetadataMutation();
 
   if (!pack) return null;
 
@@ -33,14 +59,40 @@ export const PackMetadataModal: FC<{
           />
         </Box>
       )}
-      <TextInput readOnly label="Titre" value={pack.metadata?.title} />
+      <Code>{pack.uuid}</Code>
+      <TextInput label="Titre" {...form.getInputProps("title")} />
       <Space h={10} />
       <Textarea
-        readOnly
         autosize
         label="Description"
-        value={pack.metadata?.description}
+        {...form.getInputProps("description")}
       />
+      <Space h={10} />
+      <Flex justify="flex-end">
+        <Button
+          disabled={!form.isDirty()}
+          color="green"
+          loading={isLoading}
+          leftIcon={<IconCheck size="1rem" />}
+          onClick={async () => {
+            const metadata: PackMetadata = {
+              title: form.values.title,
+              description: form.values.description,
+              packType: pack.metadata?.packType || "unknown",
+              uuid: pack.metadata?.uuid || pack.uuid,
+              ref: pack.metadata?.ref || uuidToRef(pack.uuid),
+            };
+            await saveMetadata({
+              uuid: pack.uuid,
+              metadata,
+              shouldCreate: true,
+            });
+            form.resetDirty();
+          }}
+        >
+          Enregistrer
+        </Button>
+      </Flex>
     </Modal>
   );
 };

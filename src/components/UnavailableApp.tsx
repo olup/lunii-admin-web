@@ -4,8 +4,6 @@ import { IconInfoCircle } from "@tabler/icons-react";
 
 export const UnavailableApp = () => {
   const details = useUserAgent();
-
-  console.log(details);
   return (
     <Center h={500}>
       <Box>

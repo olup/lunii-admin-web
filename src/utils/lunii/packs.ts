@@ -76,13 +76,14 @@ export const getPacksMetadata = async (
 export const savePackMetadata = async (
   luniiHandle: FileSystemDirectoryHandle,
   uuid: string,
-  metadata: PackMetadata
+  metadata: PackMetadata,
+  create = false
 ) => {
   const contentHandle = await luniiHandle.getDirectoryHandle(".content");
   const packDirectoryHandle = await contentHandle.getDirectoryHandle(
     uuidToRef(uuid)
   );
-  await writeFile(packDirectoryHandle, "md", stringify(metadata));
+  await writeFile(packDirectoryHandle, "md", stringify(metadata), create);
 };
 
 export const writePackUuids = async (
@@ -150,7 +151,6 @@ export const syncPacksMetadataFromStore = async (
   luniHandle: FileSystemDirectoryHandle
 ) => {
   const luniiStoreEntries = await getLuniiStoreDb();
-  console.log(luniiStoreEntries);
   const packs = await getPacksMetadata(luniHandle);
   packs.forEach(async (pack) => {
     if (pack.metadata) return;
