@@ -1,9 +1,5 @@
 import { Center, Container, Loader, Space, Text } from "@mantine/core";
-import {
-  useGetPacksQuery,
-  useRemovePackMutation,
-  useReorderPackMutation,
-} from "../queries";
+import { useGetPacksQuery } from "../queries";
 import { state } from "../store";
 import { Header } from "./Header";
 import { InstallModal } from "./InstallModal";
@@ -13,10 +9,6 @@ export const ConnectedApp = () => {
   const isFfmpegLoaded = state.isFfmpegLoaded.use();
 
   const { data } = useGetPacksQuery();
-
-  const { mutate: movePack } = useReorderPackMutation();
-
-  const { mutate: removePack } = useRemovePackMutation();
 
   if (!isFfmpegLoaded)
     return (
@@ -32,13 +24,7 @@ export const ConnectedApp = () => {
         <Header />
         <Space h={10} />
         {data?.map((pack, i) => (
-          <Pack
-            key={pack.uuid}
-            pack={pack}
-            onMoveUp={() => movePack({ from: i, to: i - 1 })}
-            onMoveDown={() => movePack({ from: i, to: i + 1 })}
-            onRemove={() => removePack(pack.uuid)}
-          />
+          <Pack key={pack.uuid} pack={pack} position={i} />
         ))}
       </Container>
       <InstallModal />

@@ -14,6 +14,7 @@ import { modals } from "@mantine/modals";
 import {
   IconArrowDown,
   IconArrowUp,
+  IconArrowsUp,
   IconDots,
   IconInfoCircle,
   IconTrash,
@@ -21,14 +22,16 @@ import {
 import { FC, useState } from "react";
 import { PackShell } from "../utils/lunii/packs";
 import { PackMetadataModal } from "./PackMetadataModal";
+import { useRemovePackMutation, useReorderPackMutation } from "../queries";
 
 export const Pack: FC<{
   pack: PackShell;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
-  onRemove?: () => void;
-}> = ({ pack, onMoveDown, onMoveUp, onRemove }) => {
+  position: number;
+}> = ({ pack, position }) => {
   const [metadataModalOpen, setMetadataModalOpen] = useState(false);
+
+  const { mutate: movePack } = useReorderPackMutation();
+  const { mutate: removePack } = useRemovePackMutation();
 
   const openRemoveModal = () =>
     modals.openConfirmModal({
@@ -43,7 +46,7 @@ export const Pack: FC<{
       labels: { confirm: "Supprimer", cancel: "Annuler" },
       confirmProps: { color: "red", rightIcon: <IconTrash size={14} /> },
       onCancel: () => {},
-      onConfirm: () => onRemove?.(),
+      onConfirm: () => removePack(pack.uuid),
     });
 
   return (
@@ -57,11 +60,19 @@ export const Pack: FC<{
         pos="relative"
       >
         <Box>
-          <ActionIcon variant="subtle" color="blue" onClick={onMoveUp}>
+          <ActionIcon
+            variant="subtle"
+            color="blue"
+            onClick={() => movePack({ from: position, to: position - 1 })}
+          >
             <IconArrowUp size={18} />
           </ActionIcon>
           <Space h={5} />
-          <ActionIcon variant="subtle" color="blue" onClick={onMoveDown}>
+          <ActionIcon
+            variant="subtle"
+            color="blue"
+            onClick={() => movePack({ from: position, to: position + 1 })}
+          >
             <IconArrowDown size={18} />
           </ActionIcon>
         </Box>
@@ -87,32 +98,36 @@ export const Pack: FC<{
             {pack.metadata?.description}
           </Text>
         </Box>
-        {onRemove && (
-          <Box pos="absolute" top={5} right={5}>
-            <Menu position="bottom-start">
-              <Menu.Target>
-                <ActionIcon variant="subtle" color="blue">
-                  <IconDots size={18} />
-                </ActionIcon>
-              </Menu.Target>
-              <Menu.Dropdown>
-                <Menu.Item
-                  icon={<IconInfoCircle size={12} />}
-                  onClick={() => setMetadataModalOpen(true)}
-                >
-                  Details
-                </Menu.Item>
-                <Menu.Item
-                  color="red"
-                  icon={<IconTrash size={12} />}
-                  onClick={() => openRemoveModal()}
-                >
-                  Supprimer
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
-          </Box>
-        )}
+        <Box pos="absolute" top={5} right={5}>
+          <Menu position="bottom-start">
+            <Menu.Target>
+              <ActionIcon variant="subtle" color="blue">
+                <IconDots size={18} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item
+                icon={<IconInfoCircle size={12} />}
+                onClick={() => setMetadataModalOpen(true)}
+              >
+                Details
+              </Menu.Item>
+              <Menu.Item
+                icon={<IconArrowsUp size="1rem" />}
+                onClick={() => movePack({ from: position, to: 0 })}
+              >
+                Mettre en premier
+              </Menu.Item>
+              <Menu.Item
+                color="red"
+                icon={<IconTrash size={12} />}
+                onClick={() => openRemoveModal()}
+              >
+                Supprimer
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        </Box>
       </Paper>
       {metadataModalOpen && (
         <PackMetadataModal
