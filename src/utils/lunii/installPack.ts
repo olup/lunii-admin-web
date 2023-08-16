@@ -172,9 +172,14 @@ export const installPack = async (
     console.log("Generated files were successfully copied to the device");
 
     // add pack to device pack index
-    await addPackUuid(deviceHandle, metadata.uuid);
-
-    console.log("Pack uuid was successfully added to the device index");
+    // handle errors silently as the pack is already installed
+    await addPackUuid(deviceHandle, metadata.uuid)
+      .then(() => {
+        console.log("Pack uuid was successfully added to the device index");
+      })
+      .catch((e) => {
+        console.error("Failed to add pack uuid to the device index", e);
+      });
   } finally {
     // clean
     await root.removeEntry("temp", { recursive: true });
