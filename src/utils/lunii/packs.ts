@@ -4,6 +4,7 @@ import { getFileHandleFromPath, readFileAsText, writeFile } from "../fs";
 import { PackMetadata } from "./types";
 import { decipherFirstBlockCommonKey } from "../cipher";
 import { uuidToRef } from "../generators";
+import { stripHtmlTags } from "..";
 
 export type PackShell = {
   uuid: string;
@@ -62,7 +63,7 @@ export const getPacksMetadata = async (
           metadata: parse(packMetadataYaml) as PackMetadata,
         };
       } catch (e) {
-        console.warn("Metadata missing for pack ", uuid);
+        console.log("Metadata missing for pack ", uuid);
         return {
           uuid,
         } as PackShell;
@@ -156,13 +157,11 @@ export const syncPacksMetadataFromStore = async (
   packs.forEach(async (pack) => {
     if (pack.metadata) return;
 
-    console.log("Syncing pack: ", pack.uuid);
-
     const entry = luniiStoreEntries.find((entry) => entry.uuid === pack.uuid);
     if (!entry) return;
 
     const metadata: PackMetadata = {
-      description: entry.localized_infos.fr_FR.description,
+      description: stripHtmlTags(entry.localized_infos.fr_FR.description),
       title: entry.localized_infos.fr_FR.title,
       uuid: entry.uuid,
       ref: uuidToRef(entry.uuid),
