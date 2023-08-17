@@ -60,33 +60,32 @@ export const useRemovePackMutation = () => {
   });
 };
 
-export const useInstallPackMutation = () => {
+export const useInstallPack = () => {
   const client = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
+  return async () => {
+    try {
       const [fileHandle] = await window.showOpenFilePicker({
         types: [{ accept: { "application/zip": [".zip"] } }],
         multiple: false,
       });
       const device = state.device.peek()!;
       await installPack(fileHandle, device.specificKey);
-    },
-    onSuccess: () =>
+
       notifications.show({
         title: "Installation terminée",
         message: "Le pack a été installé avec succès",
         color: "green",
-      }),
-    onError: (err) =>
+      });
+    } catch (err) {
       notifications.show({
         title: "Erreur",
         message: (err as Error).message,
         color: "red",
-      }),
-    onSettled: () => {
+      });
+    } finally {
       client.invalidateQueries("packs");
-    },
-  });
+    }
+  };
 };
 
 export const useSyncMetadataMutation = () => {

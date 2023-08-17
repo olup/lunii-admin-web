@@ -7,13 +7,13 @@ import {
   IconSun,
   IconUpload,
 } from "@tabler/icons-react";
-import { useInstallPackMutation, useSyncMetadataMutation } from "../queries";
+import { useInstallPack, useSyncMetadataMutation } from "../queries";
 import { state, switchColorScheme } from "../store";
 
 export const Header = () => {
   const colorScheme = state.colorScheme.use();
 
-  const { mutate: doInstallPack } = useInstallPackMutation();
+  const doInstallPack = useInstallPack();
 
   const { mutate: syncMetadata } = useSyncMetadataMutation();
 
