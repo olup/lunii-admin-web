@@ -1,7 +1,11 @@
 type LuniiDbEntry = {
-  title: string;
   uuid: string;
-  subtitle: string;
+  localized_infos: {
+    fr_FR: {
+      description: string;
+      title: string;
+    };
+  };
 };
 
 export async function getLuniiStoreDb() {

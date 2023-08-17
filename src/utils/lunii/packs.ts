@@ -62,7 +62,7 @@ export const getPacksMetadata = async (
           metadata: parse(packMetadataYaml) as PackMetadata,
         };
       } catch (e) {
-        console.error(e);
+        console.warn("Metadata missing for pack ", uuid);
         return {
           uuid,
         } as PackShell;
@@ -152,6 +152,7 @@ export const syncPacksMetadataFromStore = async (
 ) => {
   const luniiStoreEntries = await getLuniiStoreDb();
   const packs = await getPacksMetadata(luniHandle);
+
   packs.forEach(async (pack) => {
     if (pack.metadata) return;
 
@@ -159,14 +160,16 @@ export const syncPacksMetadataFromStore = async (
 
     const entry = luniiStoreEntries.find((entry) => entry.uuid === pack.uuid);
     if (!entry) return;
+
     const metadata: PackMetadata = {
-      description: entry.subtitle,
-      title: entry.title,
+      description: entry.localized_infos.fr_FR.description,
+      title: entry.localized_infos.fr_FR.title,
       uuid: entry.uuid,
       ref: uuidToRef(entry.uuid),
       packType: "lunii",
     };
-    await savePackMetadata(luniHandle, pack.uuid, metadata);
+
+    await savePackMetadata(luniHandle, pack.uuid, metadata, true);
   });
 };
 
