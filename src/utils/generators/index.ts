@@ -16,8 +16,8 @@ export const getImageAssetList = (pack: StudioPack) => {
         position,
         name: stageNode.image,
       });
+      position++;
     }
-    position++;
   });
   return imageAssetList;
 };
