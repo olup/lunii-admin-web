@@ -1,5 +1,5 @@
 import { createFFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile, toBlobURL } from "@ffmpeg/util";
+import { fetchFile } from "@ffmpeg/util";
 import { state } from "../../store";
 const baseURL = "https://unpkg.com/@ffmpeg/core@0.11.0/dist";
 
@@ -9,12 +9,9 @@ const ffmpeg = createFFmpeg({
       p.ratio * 100
     );
   },
-  corePath: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
-  wasmPath: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
-  workerPath: await toBlobURL(
-    `${baseURL}/ffmpeg-core.worker.js`,
-    "text/javascript"
-  ),
+  corePath: `${baseURL}/ffmpeg-core.js`,
+  wasmPath: `${baseURL}/ffmpeg-core.wasm`,
+  workerPath: `${baseURL}/ffmpeg-core.worker.js`,
 });
 
 const loadFFmpeg = async () => {
@@ -28,9 +25,7 @@ loadFFmpeg();
 
 // convert audio to mp3 44100Hz 129khz mono
 export async function convertAudioToMP3(inputFile: File): Promise<Uint8Array> {
-  console.log("one");
   await ffmpeg.FS("writeFile", inputFile.name, await fetchFile(inputFile));
-  console.log("two");
   await ffmpeg
     .run(
       "-i",
@@ -49,7 +44,6 @@ export async function convertAudioToMP3(inputFile: File): Promise<Uint8Array> {
       console.error(e);
       throw e;
     });
-  console.log("three");
   const data = (await ffmpeg.FS("readFile", "output.mp3")) as Uint8Array;
 
   // cleaning
