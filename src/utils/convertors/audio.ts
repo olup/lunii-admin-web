@@ -44,6 +44,13 @@ export async function convertAudioToMP3(inputFile: File): Promise<Uint8Array> {
     "output.mp3",
   ]);
   const data = (await ffmpeg.readFile("output.mp3")) as Uint8Array;
+
+  // cleaning
+  await ffmpeg.deleteFile(inputFile.name);
   await ffmpeg.deleteFile("output.mp3");
+
+  // control
+  console.log(await ffmpeg.listDir("."));
+
   return data;
 }

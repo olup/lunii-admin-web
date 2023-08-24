@@ -77,6 +77,7 @@ export const useInstallPack = () => {
         color: "green",
       });
     } catch (err) {
+      console.log(err);
       notifications.show({
         title: "Erreur",
         message: (err as Error).message,
