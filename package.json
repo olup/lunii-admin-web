@@ -12,7 +12,7 @@
   "dependencies": {
     "@emotion/react": "^11.11.1",
     "@ffmpeg/core": "^0.8.5",
-    "@ffmpeg/ffmpeg": "^0.12.4",
+    "@ffmpeg/ffmpeg": "^0.11.6",
     "@ffmpeg/util": "^0.12.0",
     "@legendapp/state": "^1.8.1",
     "@mantine/core": "^6.0.17",

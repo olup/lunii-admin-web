@@ -9,9 +9,9 @@ export default defineConfig({
   define: {
     __COMMIT_HASH__: JSON.stringify(commitHash),
   },
-  optimizeDeps: {
-    exclude: ["@ffmpeg/ffmpeg", "@ffmpeg/util"],
-  },
+  // optimizeDeps: {
+  //   exclude: ["@ffmpeg/ffmpeg", "@ffmpeg/util"],
+  // },
   plugins: [react()],
   server: {
     headers: {
