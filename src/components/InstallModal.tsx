@@ -44,7 +44,11 @@ export const InstallModal = () => {
         <Space h={100} />
         <Center>
           <Paper shadow="md" p="lg" radius="sm" w={500} withBorder>
-            <Text>Installation du pack</Text>
+            <Text>
+              Installation du pack{" "}
+              {installation.packInstallationProgress.doneCount + 1} /{" "}
+              {installation.packInstallationProgress.totalCount}
+            </Text>
             {installation.step !== "UNZIPPING" && (
               <Text>
                 <Code>{installation.pack?.title}</Code>

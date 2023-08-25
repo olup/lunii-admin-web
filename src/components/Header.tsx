@@ -23,7 +23,7 @@ export const Header = () => {
         leftIcon={<IconUpload size="1rem" />}
         onClick={() => doInstallPack()}
       >
-        Installer un pack
+        Installer des packs
       </Button>
       <Space w={10} />
       <Tooltip

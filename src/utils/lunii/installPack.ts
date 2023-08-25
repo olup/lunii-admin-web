@@ -1,4 +1,5 @@
 import { stringify } from "yaml";
+import { BLANK_MP3_FILE } from "..";
 import { resetInstallationState, state } from "../../store";
 import { cipherFirstBlockCommonKey } from "../cipher";
 import { convertAudioToMP3 } from "../convertors/audio";
@@ -23,13 +24,11 @@ import { generateNiBinary } from "../generators/ni";
 import { unzip } from "../zip";
 import { addPackUuid } from "./packs";
 import { PackMetadata, StudioPack } from "./types";
-import { BLANK_MP3_FILE } from "..";
 
 export const installPack = async (
   archive: FileSystemFileHandle,
   deviceSepcificKey: Uint8Array
 ) => {
-  state.installation.isInstalling.set(true);
   state.installation.step.set("UNZIPPING");
 
   const file = await archive.getFile();

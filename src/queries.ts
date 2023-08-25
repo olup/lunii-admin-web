@@ -1,6 +1,6 @@
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "react-query";
-import { state } from "./store";
+import { resetInstallationState, state } from "./store";
 import { uuidToRef } from "./utils/generators";
 import { installPack } from "./utils/lunii/installPack";
 import {
@@ -64,16 +64,25 @@ export const useInstallPack = () => {
   const client = useQueryClient();
   return async () => {
     try {
-      const [fileHandle] = await window.showOpenFilePicker({
+      const fileHandles = await window.showOpenFilePicker({
         types: [{ accept: { "application/zip": [".zip"] } }],
-        multiple: false,
+        multiple: true,
       });
       const device = state.device.peek()!;
-      await installPack(fileHandle, device.specificKey);
+      const installation = state.installation;
+      installation.isInstalling.set(true);
+      installation.packInstallationProgress.totalCount.set(fileHandles.length);
 
+      for (const fileHandle of fileHandles) {
+        await installPack(fileHandle, device.specificKey);
+        installation.packInstallationProgress.doneCount.set(
+          installation.packInstallationProgress.doneCount.peek() + 1
+        );
+        client.invalidateQueries("packs");
+      }
       notifications.show({
         title: "Installation terminée",
-        message: "Le pack a été installé avec succès",
+        message: `Les packs ont été installés avec succès`,
         color: "green",
       });
     } catch (err) {
@@ -84,6 +93,7 @@ export const useInstallPack = () => {
         color: "red",
       });
     } finally {
+      resetInstallationState();
       client.invalidateQueries("packs");
     }
   };
