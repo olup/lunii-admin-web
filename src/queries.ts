@@ -78,7 +78,6 @@ export const useInstallPack = () => {
         installation.packInstallationProgress.doneCount.set(
           installation.packInstallationProgress.doneCount.peek() + 1
         );
-        client.invalidateQueries("packs");
       }
       notifications.show({
         title: "Installation terminée",

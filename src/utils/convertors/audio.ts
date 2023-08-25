@@ -1,7 +1,6 @@
 import { createFFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
 import { state } from "../../store";
-const baseURL = "https://unpkg.com/@ffmpeg/core@0.11.0/dist";
 
 const ffmpeg = createFFmpeg({
   progress: (p) => {
@@ -9,9 +8,6 @@ const ffmpeg = createFFmpeg({
       p.ratio * 100
     );
   },
-  corePath: `${baseURL}/ffmpeg-core.js`,
-  wasmPath: `${baseURL}/ffmpeg-core.wasm`,
-  workerPath: `${baseURL}/ffmpeg-core.worker.js`,
 });
 
 const loadFFmpeg = async () => {
