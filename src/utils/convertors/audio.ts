@@ -26,6 +26,8 @@ export async function convertAudioToMP3(inputFile: File): Promise<Uint8Array> {
     .run(
       "-i",
       inputFile.name,
+      "-map",
+      "0:a",
       "-ar",
       "44100",
       "-ac",
@@ -34,6 +36,10 @@ export async function convertAudioToMP3(inputFile: File): Promise<Uint8Array> {
       "128k",
       "-map_metadata",
       "-1",
+      "-write_xing",
+      "0",
+      "-id3v2_version",
+      "0",
       "output.mp3"
     )
     .catch((e) => {

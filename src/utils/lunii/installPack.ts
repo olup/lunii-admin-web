@@ -143,7 +143,7 @@ export const installPack = async (
       const cipheredMp3 = cipherFirstBlockCommonKey(mp3);
 
       await writeFile(outDir, "sf/000/" + assetName, cipheredMp3, true);
-      // await writeFile(outDir, "sf/000/" + assetName + "-debug.mp3", mp3, true); //debug
+      await writeFile(outDir, "sf/000/" + assetName + "-debug.mp3", mp3, true); //debug
       console.log(
         `Audio file ${asset.position} / ${audioAssetList.length} converted to mp3`
       );
