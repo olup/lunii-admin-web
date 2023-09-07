@@ -1,6 +1,7 @@
 import { createFFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
 import { state } from "../../store";
+import { parseBlob } from "music-metadata-browser";
 
 const ffmpeg = createFFmpeg({
   progress: (p) => {
@@ -19,8 +20,28 @@ const loadFFmpeg = async () => {
 
 loadFFmpeg();
 
+const isPropperAudioFormat = async (inputFile: File) => {
+  if (inputFile.type !== "audio/mpeg") return false;
+
+  const details = await parseBlob(inputFile);
+  if (details.format.codec !== "MPEG 1 Layer 3") return false;
+  if (details.format.sampleRate != 44100) return false;
+  if (details.format.numberOfChannels != 1) return false;
+  if (details.format.codecProfile !== "CBR") return false;
+
+  console.log(details.native);
+
+  if (details.native) return false;
+  return true;
+};
+
 // convert audio to mp3 44100Hz 129khz mono
 export async function convertAudioToMP3(inputFile: File): Promise<Uint8Array> {
+  // check if file is already of proper format
+  if (await isPropperAudioFormat(inputFile)) {
+    console.log("File is already of proper format - copying as-is");
+    return new Uint8Array(await inputFile.arrayBuffer());
+  }
   await ffmpeg.FS("writeFile", inputFile.name, await fetchFile(inputFile));
   await ffmpeg
     .run(
@@ -33,7 +54,7 @@ export async function convertAudioToMP3(inputFile: File): Promise<Uint8Array> {
       "-ac",
       "1",
       "-b:a",
-      "128k",
+      "64k",
       "-map_metadata",
       "-1",
       "-write_xing",
