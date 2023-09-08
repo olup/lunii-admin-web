@@ -34,7 +34,7 @@ const isPropperAudioFormat = (byteArray: Uint8Array) => {
 
 // convert audio to mp3 44100Hz 129khz mono
 export async function convertAudioToMP3(inputFile: File): Promise<Uint8Array> {
-  if (inputFile.type !== "audio/mpeg") {
+  if (inputFile.type == "audio/mpeg") {
     const byteArray = new Uint8Array(await inputFile.arrayBuffer());
     if (isPropperAudioFormat(byteArray)) {
       console.log("File is already in the correct format, copying as-is");
