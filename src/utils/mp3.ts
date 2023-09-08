@@ -30,29 +30,3 @@ export function readMP3Header(
 
   return { channelCount, frameRate };
 }
-
-// Define the MPEG audio version and layer for reference
-const mpegVersions = [2.5, undefined, 2, 1];
-
-// Bitrate lookup table for MPEG version 1, layer III (CBR)
-const bitRateTable = [
-  [
-    undefined,
-    32,
-    64,
-    96,
-    128,
-    160,
-    192,
-    224,
-    256,
-    288,
-    320,
-    352,
-    384,
-    416,
-    448,
-  ],
-  [undefined, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256],
-  [undefined, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256],
-];
