@@ -1,7 +1,7 @@
 import { createFFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
 import { state } from "../../store";
-import { hasId3Tags, readMP3Header } from "../mp3";
+import { cleanMp3Header, hasId3Tags, isMP3CBR, readMP3Header } from "../mp3";
 const ffmpeg = createFFmpeg({
   progress: (p) => {
     state.installation.audioFileGenerationProgress.conversionProgress.set(
@@ -26,8 +26,7 @@ const isPropperAudioFormat = (byteArray: Uint8Array) => {
   if (details === null) return false;
   if (details.channelCount !== 1) return false;
   if (details.frameRate !== 44100) return false;
-
-  // todo check CBR mode - here we just assume it
+  if (!isMP3CBR(byteArray, 44100)) return false;
 
   return true;
 };
@@ -36,9 +35,11 @@ const isPropperAudioFormat = (byteArray: Uint8Array) => {
 export async function convertAudioToMP3(inputFile: File): Promise<Uint8Array> {
   if (inputFile.type == "audio/mpeg") {
     const byteArray = new Uint8Array(await inputFile.arrayBuffer());
-    if (isPropperAudioFormat(byteArray)) {
+    const cleanedMp3 = cleanMp3Header(byteArray);
+
+    if (cleanedMp3 && isPropperAudioFormat(cleanedMp3)) {
       console.log("File is already in the correct format, copying as-is");
-      return byteArray;
+      return cleanedMp3;
     }
   }
 
