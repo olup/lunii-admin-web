@@ -1,7 +1,7 @@
 import { stringify } from "yaml";
 import { BLANK_MP3_FILE } from "..";
 import { resetPackInstallationState, state } from "../../store";
-import { cipherFirstBlockCommonKey } from "../cipher";
+import { encryptFirstBlock, v2CommonKey } from "../cipher";
 import { convertAudioToMP3 } from "../convertors/audio";
 import { convertImageToBmp4 } from "../convertors/image";
 import {
@@ -18,17 +18,27 @@ import {
   uuidToRef,
 } from "../generators";
 import { generateBinaryFromAssetIndex } from "../generators/asset";
-import { generateBtBinary } from "../generators/bt";
+import { v2GenerateBtBinary } from "../generators/bt";
 import { generateLiBinary } from "../generators/li";
 import { generateNiBinary } from "../generators/ni";
 import { unzip } from "../zip";
 import { addPackUuid } from "./packs";
 import { PackMetadata, StudioPack } from "./types";
+import { encryptXxtea } from "../crypto/xxtea";
+import { DeviceV2, DeviceV3 } from "./deviceInfo";
+import { encryptAes } from "../crypto/aes";
 
 export const installPack = async (
   archive: FileSystemFileHandle,
-  deviceSepcificKey: Uint8Array
+  device: DeviceV2 | DeviceV3
 ) => {
+  let encrypt: (block: Uint8Array) => Promise<Uint8Array | null>;
+
+  if (device.version === "V2") encrypt = encryptXxtea(v2CommonKey);
+  else if (device.version === "V3")
+    encrypt = encryptAes(new Uint8Array(), new Uint8Array());
+  else throw new Error("Unknown device version");
+
   state.installation.step.set("UNZIPPING");
 
   const file = await archive.getFile();
@@ -82,16 +92,33 @@ export const installPack = async (
 
     const liBinary = generateLiBinary(listNodesList, pack.stageNodes);
 
-    const btBinary = generateBtBinary(
-      cipherFirstBlockCommonKey(riBinary),
-      deviceSepcificKey
+    const btBinary = await v2GenerateBtBinary(
+      await encryptFirstBlock(riBinary, encrypt),
+      (device as DeviceV2).specificKey
     );
+
+    if (!btBinary) throw new Error("Failed to generate bt binary");
 
     // write binaries
     await writeFile(outDir, "ni", niBinary, true);
-    await writeFile(outDir, "li", cipherFirstBlockCommonKey(liBinary), true);
-    await writeFile(outDir, "ri", cipherFirstBlockCommonKey(riBinary), true);
-    await writeFile(outDir, "si", cipherFirstBlockCommonKey(siBinary), true);
+    await writeFile(
+      outDir,
+      "li",
+      await encryptFirstBlock(liBinary, encrypt),
+      true
+    );
+    await writeFile(
+      outDir,
+      "ri",
+      await encryptFirstBlock(riBinary, encrypt),
+      true
+    );
+    await writeFile(
+      outDir,
+      "si",
+      await encryptFirstBlock(siBinary, encrypt),
+      true
+    );
     await writeFile(outDir, "bt", btBinary, true);
 
     console.log("All binaries were successfully generated");
@@ -109,7 +136,7 @@ export const installPack = async (
       const bmpBlob = await convertImageToBmp4(imageFile);
       const bmp = new Uint8Array(await bmpBlob.arrayBuffer());
 
-      const cipheredBmp = cipherFirstBlockCommonKey(bmp);
+      const cipheredBmp = await encryptFirstBlock(bmp, encrypt);
 
       const assetName = asset.position.toString().padStart(8, "0");
       await writeFile(outDir, "rf/000/" + assetName, cipheredBmp, true);
@@ -127,7 +154,7 @@ export const installPack = async (
 
       // insert blank mp3 when we find an empty audio
       if (asset.name === "BLANK_MP3") {
-        const cipheredMp3 = cipherFirstBlockCommonKey(BLANK_MP3_FILE);
+        const cipheredMp3 = await encryptFirstBlock(BLANK_MP3_FILE, encrypt);
         await writeFile(outDir, "sf/000/" + assetName, cipheredMp3, true);
         continue;
       }
@@ -140,7 +167,7 @@ export const installPack = async (
       const audioFile = await handle.getFile();
 
       const mp3 = await convertAudioToMP3(audioFile);
-      const cipheredMp3 = cipherFirstBlockCommonKey(mp3);
+      const cipheredMp3 = await encryptFirstBlock(mp3, encrypt);
 
       await writeFile(outDir, "sf/000/" + assetName, cipheredMp3, true);
       // await writeFile(outDir, "sf/000/" + assetName + "-debug.mp3", mp3, true); //debug

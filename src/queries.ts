@@ -74,7 +74,7 @@ export const useInstallPack = () => {
       installation.packInstallationProgress.totalCount.set(fileHandles.length);
 
       for (const fileHandle of fileHandles) {
-        await installPack(fileHandle, device.specificKey);
+        await installPack(fileHandle, device);
         installation.packInstallationProgress.doneCount.set(
           installation.packInstallationProgress.doneCount.peek() + 1
         );

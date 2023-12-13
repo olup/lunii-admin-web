@@ -1,15 +1,15 @@
 import { observable } from "@legendapp/state";
-import { Device } from "./utils/lunii/deviceInfo";
 import { PackMetadata } from "./utils/lunii/types";
 import {
   configureObservablePersistence,
   persistObservable,
 } from "@legendapp/state/persist";
 import { ObservablePersistLocalStorage } from "@legendapp/state/persist-plugins/local-storage";
+import { DeviceV2, DeviceV3 } from "./utils/lunii/deviceInfo";
 
 export const state = observable({
   luniiHandle: null as FileSystemDirectoryHandle | null,
-  device: null as Device | null,
+  device: null as DeviceV2 | DeviceV3 | null,
   isFfmpegLoaded: false,
   colorScheme: "light" as "light" | "dark",
 

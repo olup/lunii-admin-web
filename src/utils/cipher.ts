@@ -1,38 +1,35 @@
-import {
-  decryptUint32Array,
-  encryptXXTEA,
-  toUint32Array,
-  toUint8Array,
-} from "./crypto/xxtea";
+import { decryptXxtea } from "./crypto/xxtea";
 
-const key: Uint8Array = new Uint8Array([
+export const v2CommonKey: Uint8Array = new Uint8Array([
   0x91, 0xbd, 0x7a, 0x0a, 0xa7, 0x54, 0x40, 0xa9, 0xbb, 0xd4, 0x9d, 0x6c, 0xe0,
   0xdc, 0xc0, 0xe3,
 ]);
 
-const keyUint32 = toUint32Array(key, false);
-
-export function cipherFirstBlockCommonKey(data: Uint8Array): Uint8Array {
+export async function encryptFirstBlock(
+  data: Uint8Array,
+  encrypt: (data: Uint8Array) => Promise<Uint8Array | null>,
+  size = 512
+): Promise<Uint8Array> {
   const cipheredData = new Uint8Array(data);
-  const firstBlockLength = Math.min(512, data.length);
+  const firstBlockLength = Math.min(size, data.length);
   const firstBlock = data.subarray(0, firstBlockLength);
-
-  const encryptedBlock = encryptXXTEA(firstBlock, key);
-
+  const encryptedBlock = await encrypt(firstBlock);
   if (encryptedBlock === null) {
     throw new Error("Encrypted block is null");
   }
-
   cipheredData.set(encryptedBlock);
   return cipheredData;
 }
 
-export function decipherFirstBlockCommonKey(data: Uint8Array): Uint8Array {
-  const firstBlockLength = Math.min(512, data.length);
+export function decipherFirstBlockCommonKey(
+  data: Uint8Array,
+  decrypt: (data: Uint8Array) => Uint8Array | null,
+  size = 512
+): Uint8Array {
+  const firstBlockLength = Math.min(size, data.length);
   const firstBlock = data.subarray(0, firstBlockLength);
-  const dataInt = toUint32Array(firstBlock);
-  const encryptedIntData = decryptUint32Array(dataInt, keyUint32);
-  const decryptedBlock = toUint8Array(encryptedIntData);
+  const decryptedBlock = decrypt(firstBlock);
+
   if (decryptedBlock === null) {
     throw new Error("Decrypted block is null");
   }
@@ -42,7 +39,10 @@ export function decipherFirstBlockCommonKey(data: Uint8Array): Uint8Array {
 }
 
 export function computeSpecificKeyFromUUID(uuid: Uint8Array): Uint8Array {
-  const specificKey = decipherFirstBlockCommonKey(uuid);
+  const specificKey = decipherFirstBlockCommonKey(
+    uuid,
+    decryptXxtea(v2CommonKey)
+  ); // todo
   const reorderedSpecificKey = new Uint8Array([
     specificKey[11],
     specificKey[10],
