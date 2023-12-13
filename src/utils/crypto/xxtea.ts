@@ -126,3 +126,11 @@ export function decryptUint32Array(
   }
   return v;
 }
+
+export const encryptXXTEA = (block: Uint8Array, key: Uint8Array) => {
+  const dataInt = toUint32Array(block);
+  const keyInt = toUint32Array(key, false);
+
+  const encryptedIntData = encryptUint32Array(dataInt, keyInt);
+  return toUint8Array(encryptedIntData);
+};

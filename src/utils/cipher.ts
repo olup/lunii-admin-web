@@ -1,9 +1,9 @@
 import {
   decryptUint32Array,
-  encryptUint32Array,
+  encryptXXTEA,
   toUint32Array,
   toUint8Array,
-} from "./xxtea";
+} from "./crypto/xxtea";
 
 const key: Uint8Array = new Uint8Array([
   0x91, 0xbd, 0x7a, 0x0a, 0xa7, 0x54, 0x40, 0xa9, 0xbb, 0xd4, 0x9d, 0x6c, 0xe0,
@@ -14,14 +14,10 @@ const keyUint32 = toUint32Array(key, false);
 
 export function cipherFirstBlockCommonKey(data: Uint8Array): Uint8Array {
   const cipheredData = new Uint8Array(data);
-
   const firstBlockLength = Math.min(512, data.length);
   const firstBlock = data.subarray(0, firstBlockLength);
 
-  const dataInt = toUint32Array(firstBlock);
-
-  const encryptedIntData = encryptUint32Array(dataInt, keyUint32);
-  const encryptedBlock = toUint8Array(encryptedIntData);
+  const encryptedBlock = encryptXXTEA(firstBlock, key);
 
   if (encryptedBlock === null) {
     throw new Error("Encrypted block is null");
@@ -66,14 +62,4 @@ export function computeSpecificKeyFromUUID(uuid: Uint8Array): Uint8Array {
     specificKey[4],
   ]);
   return reorderedSpecificKey;
-}
-
-export function cipherBlockSpecificKey(
-  data: Uint8Array,
-  specificKey: Uint8Array
-) {
-  const dataInt = toUint32Array(data, true);
-  const specificKeyInt = toUint32Array(specificKey, false);
-  const encryptedIntData = encryptUint32Array(dataInt, specificKeyInt);
-  return toUint8Array(encryptedIntData);
 }

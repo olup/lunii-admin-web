@@ -1,4 +1,4 @@
-import { cipherBlockSpecificKey } from "../cipher";
+import { encryptXXTEA } from "../crypto/xxtea";
 
 export const generateBtBinary = (
   riBinaryEncrypted: Uint8Array,
@@ -6,7 +6,7 @@ export const generateBtBinary = (
 ) => {
   const firstBlockLength = Math.min(64, riBinaryEncrypted.length);
   const firstBlock = riBinaryEncrypted.subarray(0, firstBlockLength);
-  const block = cipherBlockSpecificKey(firstBlock, specificKey);
+  const block = encryptXXTEA(firstBlock, specificKey);
   if (block === null) {
     throw new Error("Ciphered block is null");
   }
