@@ -1,7 +1,7 @@
 import { createFFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
 import { state } from "../../store";
-import { cleanMp3Header, hasId3Tags, isMP3CBR, readMP3Header } from "../mp3";
+import { cleanMp3Header, hasId3Tags, readMP3Header } from "../mp3";
 const ffmpeg = createFFmpeg({
   progress: (p) => {
     state.installation.audioFileGenerationProgress.conversionProgress.set(

@@ -12,6 +12,7 @@ import {
   syncPacksMetadataFromStore,
 } from "./utils/lunii/packs";
 import { PackMetadata } from "./utils/lunii/types";
+import { cipherFirstBlockCommonKey } from "./utils/cipher";
 
 export const useGetPacksQuery = () =>
   useQuery(["packs"], () => getPacksMetadata(state.luniiHandle.peek()!));
