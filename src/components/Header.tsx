@@ -1,5 +1,15 @@
-import { ActionIcon, Badge, Button, Flex, Space, Tooltip } from "@mantine/core";
 import {
+  ActionIcon,
+  Badge,
+  Button,
+  Flex,
+  Popover,
+  Space,
+  Tooltip,
+  Text,
+} from "@mantine/core";
+import {
+  IconAlertTriangle,
   IconBrandGithubFilled,
   IconExternalLink,
   IconMoon,
@@ -9,22 +19,48 @@ import {
 } from "@tabler/icons-react";
 import { useInstallPack, useSyncMetadataMutation } from "../queries";
 import { state, switchColorScheme } from "../store";
+import { v3KeyPacks } from "../utils/v3KeyPacks";
 
 export const Header = () => {
   const colorScheme = state.colorScheme.use();
 
   const doInstallPack = useInstallPack();
+  const device = state.device.use();
+  const canInstallPack =
+    device.version === "V2" ||
+    (device.version === "V3" && device.keyPackReference !== null);
 
   const { mutate: syncMetadata } = useSyncMetadataMutation();
 
   return (
     <Flex py={5} align="center">
-      <Button
-        leftIcon={<IconUpload size="1rem" />}
-        onClick={() => doInstallPack()}
-      >
-        Installer des packs
-      </Button>
+      <Popover width={500} position="bottom-start" shadow="md">
+        <Popover.Target>
+          <Button
+            color={canInstallPack ? "blue" : "orange"}
+            leftIcon={
+              canInstallPack ? (
+                <IconUpload size="1rem" />
+              ) : (
+                <IconAlertTriangle size="1rem" />
+              )
+            }
+            onClick={() => canInstallPack && doInstallPack()}
+          >
+            Installer des packs
+          </Button>
+        </Popover.Target>
+        <Popover.Dropdown style={{ border: "1px solid orange" }}>
+          <Text mb="sm">
+            Pour installer des packs custom sur une Lunii V3, l'un de ces packs
+            officiel doit être installé:
+          </Text>
+          {v3KeyPacks.map((pack) => (
+            <Text fw="bold">{pack.name}</Text>
+          ))}
+        </Popover.Dropdown>
+      </Popover>
+
       <Space w={10} />
       <Tooltip
         openDelay={500}
@@ -70,6 +106,7 @@ export const Header = () => {
       >
         <IconBrandGithubFilled size="1rem" />
       </ActionIcon>
+
       {/* <Space w={10} />
       <ActionIcon
         variant="light"

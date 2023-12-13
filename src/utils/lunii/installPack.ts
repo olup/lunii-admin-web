@@ -2,8 +2,8 @@ import { stringify } from "yaml";
 import { BLANK_MP3_FILE } from "..";
 import { resetPackInstallationState, state } from "../../store";
 import { encryptFirstBlock, v2CommonKey } from "../cipher";
-import { convertAudioToMP3 } from "../convertors/audio";
-import { convertImageToBmp4 } from "../convertors/image";
+import { convertAudioToMP3 } from "../converters/audio";
+import { convertImageToBmp4 } from "../converters/image";
 import {
   copyAll,
   getFileHandleFromPath,
@@ -32,6 +32,7 @@ export const installPack = async (
   archive: FileSystemFileHandle,
   device: DeviceV2 | DeviceV3
 ) => {
+  // identify the encryption method according to the device
   let encrypt: (block: Uint8Array) => Promise<Uint8Array | null>;
 
   if (device.version === "V2") encrypt = encryptXxtea(v2CommonKey);

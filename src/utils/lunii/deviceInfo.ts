@@ -13,6 +13,12 @@ export type DeviceV3 = {
   version: "V3";
   serialNumber: string;
   firmwareVersion: string;
+  keyPackReference: {
+    uuid: string;
+    bt: Uint8Array;
+    key: Uint8Array;
+    iv: Uint8Array;
+  } | null;
 };
 
 export const getDeviceModel = (mdFile: Uint8Array): modelVersion => {
@@ -68,6 +74,7 @@ const getDeviceInfoV3 = (mdFile: Uint8Array): DeviceV3 => {
     version: "V3",
     serialNumber,
     firmwareVersion,
+    keyPackReference: null,
   } as DeviceV3;
 };
 
