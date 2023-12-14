@@ -5,7 +5,7 @@ export const encryptAes =
       const bytes16 = 16 - (bytes.length % 16);
       if (bytes16 < 16) {
         const liTmp = bytes;
-        bytes = new Uint8Array(liTmp.length + bytes16);
+        bytes = new Uint8Array(liTmp.length + bytes16).fill(0);
         bytes.set(liTmp);
       }
     }
