@@ -68,9 +68,12 @@ const getDeviceInfoV3 = async (mdFile: Uint8Array): Promise<DeviceV3> => {
 
   const btBin = mdFile.slice(64, 64 + 32);
 
-  const easKey = SNU.slice(16);
-  const iv = new Uint8Array(16);
+  const easKey = SNU.slice(0, 16);
+  const iv = new Uint8Array(16).fill(0);
   iv.set(SNU.slice(16, 8));
+
+  console.log("easKey", easKey);
+  console.log("iv", iv);
 
   return {
     version: "V3",
