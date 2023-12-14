@@ -2,7 +2,6 @@ import { Badge, Button, Center, Container, Text } from "@mantine/core";
 import { getLuniiHandle } from "../utils";
 import { getDeviceInfo } from "../utils/lunii/deviceInfo";
 import { state } from "../store";
-import { getV3KeyPack } from "../utils/lunii/v3KeyPacks";
 
 export const UnconnectedApp = () => {
   return (
@@ -23,10 +22,6 @@ export const UnconnectedApp = () => {
 
             await state.device.set(device);
             await state.luniiHandle.set(handle);
-
-            if (device.version === "V3") {
-              await state.keyPackReference.set(await getV3KeyPack(handle));
-            }
           }}
         >
           Charger ma Lunii
