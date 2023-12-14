@@ -2,6 +2,8 @@ export const encryptAes =
   (key: Uint8Array, iv: Uint8Array) =>
   async (bytes: Uint8Array): Promise<Uint8Array> => {
     if (bytes.length < 512) {
+      console.log("unjpadded bytes length", bytes.byteLength);
+
       const bytes16 = 16 - (bytes.length % 16);
       if (bytes16 < 16) {
         const liTmp = bytes;
@@ -26,6 +28,9 @@ export const encryptAes =
       sKey,
       bytes
     );
+
+    console.log("bytes length", bytes.byteLength);
+    console.log("encryptedBytes length", encryptedBytes.byteLength);
 
     // remove the last 16 bytes which is a padding
     return new Uint8Array(encryptedBytes.slice(0, -16));

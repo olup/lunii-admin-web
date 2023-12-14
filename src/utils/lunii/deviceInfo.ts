@@ -82,12 +82,15 @@ const getDeviceInfoV3 = async (mdFile: Uint8Array): Promise<DeviceV3> => {
     mdFile.slice(2, 2 + 6)
   );
   const SNU = mdFile.slice(26, 26 + 24);
+  console.log(SNU);
   const serialNumber = new TextDecoder("utf-8").decode(SNU);
 
   const btBin = mdFile.slice(64, 64 + 32);
 
   const easKeyRaw = SNU.slice(0, 16);
+
   const ivRaw = new Uint8Array(16).fill(0);
+  ivRaw.set(SNU.slice(16, 24));
 
   const easKey = reverseUint8ArrayBlocks(easKeyRaw);
   const iv = reverseUint8ArrayBlocks(ivRaw);
