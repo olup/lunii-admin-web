@@ -1,9 +1,1 @@
-Load the library of cracked stories (uuid, key, IVKey)
-
-Identify version 2 or 3 of the device
-- on V3 loading the device check that one of the known stories is present, or pop an error message.
-
-Install pack
-- Find the BT file of one of the cracked storypacks
-- Copy all assets and menu files on the device - use AES with the key and IVKey
-- 
+Sync thumbnails on device

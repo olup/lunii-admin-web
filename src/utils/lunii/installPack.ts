@@ -4,6 +4,8 @@ import { resetPackInstallationState, state } from "../../store";
 import { encryptFirstBlock, v2CommonKey } from "../cipher";
 import { convertAudioToMP3 } from "../converters/audio";
 import { convertImageToBmp4 } from "../converters/image";
+import { encryptAes } from "../crypto/aes";
+import { encryptXxtea } from "../crypto/xxtea";
 import {
   copyAll,
   getFileHandleFromPath,
@@ -22,12 +24,9 @@ import { v2GenerateBtBinary, v3GenerateBtBinary } from "../generators/bt";
 import { generateLiBinary } from "../generators/li";
 import { generateNiBinary } from "../generators/ni";
 import { unzip } from "../zip";
+import { DeviceV2, DeviceV3 } from "./deviceInfo";
 import { addPackUuid } from "./packs";
 import { PackMetadata, StudioPack } from "./types";
-import { encryptXxtea } from "../crypto/xxtea";
-import { DeviceV2, DeviceV3 } from "./deviceInfo";
-import { encryptAes } from "../crypto/aes";
-import { hexStringToUint8Array } from "../hex";
 
 export const installPack = async (
   archive: FileSystemFileHandle,
@@ -39,12 +38,7 @@ export const installPack = async (
   if (device.version === "V2") {
     encrypt = encryptXxtea(v2CommonKey);
   } else if (device.version === "V3") {
-    const keyPackReference = state.keyPackReference.peek();
-    if (!keyPackReference) throw new Error("No key pack reference");
-    encrypt = encryptAes(
-      hexStringToUint8Array(keyPackReference.key),
-      hexStringToUint8Array(keyPackReference.iv)
-    );
+    encrypt = encryptAes(device.easKey, device.iv);
   } else {
     throw new Error("Unknown device version");
   }

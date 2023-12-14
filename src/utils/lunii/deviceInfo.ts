@@ -13,6 +13,9 @@ export type DeviceV3 = {
   version: "V3";
   serialNumber: string;
   firmwareVersion: string;
+  btBin: Uint8Array;
+  easKey: Uint8Array;
+  iv: Uint8Array;
 };
 
 export const getDeviceModel = (mdFile: Uint8Array): modelVersion => {
@@ -60,14 +63,22 @@ const getDeviceInfoV3 = async (mdFile: Uint8Array): Promise<DeviceV3> => {
   const firmwareVersion = new TextDecoder("utf-8").decode(
     mdFile.slice(2, 2 + 6)
   );
-  const serialNumber = new TextDecoder("utf-8").decode(
-    mdFile.slice(26, 26 + 24)
-  );
+  const SNU = mdFile.slice(26, 26 + 24);
+  const serialNumber = new TextDecoder("utf-8").decode(SNU);
+
+  const btBin = mdFile.slice(64, 64 + 32);
+
+  const easKey = SNU.slice(16);
+  const iv = new Uint8Array(16);
+  iv.set(SNU.slice(16, 8));
 
   return {
     version: "V3",
     serialNumber,
     firmwareVersion,
+    btBin,
+    easKey,
+    iv,
   } as DeviceV3;
 };
 
