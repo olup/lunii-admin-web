@@ -1,4 +1,4 @@
-import { computeSpecificKeyFromUUID } from "../cipher";
+import { v2ComputeSpecificKeyFromUUID } from "../cipher";
 
 export type modelVersion = "V2" | "V3";
 export type DeviceV2 = {
@@ -48,7 +48,7 @@ const getDeviceInfoV2 = (mdFile: Uint8Array): DeviceV2 => {
 
   const uuid = new Uint8Array(mdFile.slice(256, 256 + 256));
 
-  const specificKey = computeSpecificKeyFromUUID(uuid);
+  const specificKey = v2ComputeSpecificKeyFromUUID(uuid);
 
   return {
     version: "V2",

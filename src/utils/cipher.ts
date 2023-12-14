@@ -11,9 +11,12 @@ export async function encryptFirstBlock(
   size = 512
 ): Promise<Uint8Array> {
   console.log("datalength", data.length);
+
   const firstBlockLength = Math.min(size, data.length);
   const firstBlock = data.subarray(0, firstBlockLength);
+
   const encryptedBlock = await encrypt(firstBlock);
+
   if (encryptedBlock === null) {
     throw new Error("Encrypted block is null");
   }
@@ -22,6 +25,7 @@ export async function encryptFirstBlock(
 
   const output = new Uint8Array(data);
   output.set(encryptedBlock);
+
   return output;
 }
 
@@ -42,7 +46,7 @@ export function decryptFirstBlock(
   return dataOut;
 }
 
-export function computeSpecificKeyFromUUID(uuid: Uint8Array): Uint8Array {
+export function v2ComputeSpecificKeyFromUUID(uuid: Uint8Array): Uint8Array {
   const specificKey = decryptFirstBlock(uuid, decryptXxtea(v2CommonKey)); // todo
   const reorderedSpecificKey = new Uint8Array([
     specificKey[11],

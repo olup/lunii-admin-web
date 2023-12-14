@@ -13,7 +13,7 @@ export const encryptAes =
     const sKey = await crypto.subtle.importKey(
       "raw",
       key,
-      { name: "AES-CBC", length: 128 },
+      { name: "AES-CBC" },
       false,
       ["encrypt", "decrypt"]
     );
@@ -22,7 +22,6 @@ export const encryptAes =
       {
         name: "AES-CBC",
         iv,
-        length: 128,
       },
       sKey,
       bytes
