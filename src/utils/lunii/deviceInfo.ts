@@ -59,6 +59,24 @@ const getDeviceInfoV2 = (mdFile: Uint8Array): DeviceV2 => {
   } as DeviceV2;
 };
 
+function reverseUint8ArrayBlocks(inputArray: Uint8Array): Uint8Array {
+  if (inputArray.length % 4 !== 0) {
+    throw new Error("Input array length must be a multiple of 4.");
+  }
+
+  const resultArray = new Uint8Array(inputArray.length);
+
+  for (let i = 0; i < inputArray.length; i += 4) {
+    // Reverse the order of bytes within the block
+    resultArray[i] = inputArray[i + 3];
+    resultArray[i + 1] = inputArray[i + 2];
+    resultArray[i + 2] = inputArray[i + 1];
+    resultArray[i + 3] = inputArray[i];
+  }
+
+  return resultArray;
+}
+
 const getDeviceInfoV3 = async (mdFile: Uint8Array): Promise<DeviceV3> => {
   const firmwareVersion = new TextDecoder("utf-8").decode(
     mdFile.slice(2, 2 + 6)
@@ -68,12 +86,14 @@ const getDeviceInfoV3 = async (mdFile: Uint8Array): Promise<DeviceV3> => {
 
   const btBin = mdFile.slice(64, 64 + 32);
 
-  const easKey = SNU.slice(0, 16);
-  const iv = new Uint8Array(16).fill(0);
-  iv.set(SNU.slice(16, 8));
+  const easKeyRaw = SNU.slice(0, 16);
+  const ivRaw = new Uint8Array(16).fill(0);
 
-  console.log("easKey", easKey);
-  console.log("iv", iv);
+  const easKey = reverseUint8ArrayBlocks(easKeyRaw);
+  const iv = reverseUint8ArrayBlocks(ivRaw);
+
+  console.log("easKey", easKeyRaw, easKey);
+  console.log("iv", ivRaw, iv);
 
   return {
     version: "V3",
