@@ -13,12 +13,6 @@ export type DeviceV3 = {
   version: "V3";
   serialNumber: string;
   firmwareVersion: string;
-  keyPackReference: {
-    uuid: string;
-    bt: Uint8Array;
-    key: Uint8Array;
-    iv: Uint8Array;
-  } | null;
 };
 
 export const getDeviceModel = (mdFile: Uint8Array): modelVersion => {
@@ -62,7 +56,7 @@ const getDeviceInfoV2 = (mdFile: Uint8Array): DeviceV2 => {
   } as DeviceV2;
 };
 
-const getDeviceInfoV3 = (mdFile: Uint8Array): DeviceV3 => {
+const getDeviceInfoV3 = async (mdFile: Uint8Array): Promise<DeviceV3> => {
   const firmwareVersion = new TextDecoder("utf-8").decode(
     mdFile.slice(2, 2 + 6)
   );
@@ -74,7 +68,6 @@ const getDeviceInfoV3 = (mdFile: Uint8Array): DeviceV3 => {
     version: "V3",
     serialNumber,
     firmwareVersion,
-    keyPackReference: null,
   } as DeviceV3;
 };
 
@@ -90,4 +83,6 @@ export const getDeviceInfo = async (luniiHandle: FileSystemDirectoryHandle) => {
   if (model === "V3") {
     return getDeviceInfoV3(new Uint8Array(buffer));
   }
+
+  throw new Error("Unknown device model");
 };

@@ -22,6 +22,11 @@ export const UnconnectedApp = () => {
 
             await state.device.set(device);
             await state.luniiHandle.set(handle);
+
+            if (device.version === "V3") {
+              // todo get keypack refernce
+              await state.keyPackReference.set(null);
+            }
           }}
         >
           Charger ma Lunii

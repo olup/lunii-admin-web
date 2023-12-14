@@ -8,6 +8,7 @@ import { ModalsProvider } from "@mantine/modals";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { Notifications } from "@mantine/notifications";
 import { state } from "./store.ts";
+import BetaBadge from "./components/BetaTag.tsx";
 enableReactUse();
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <WithMantine>
+        <BetaBadge />
         <App />
       </WithMantine>
     </QueryClientProvider>

@@ -10,6 +10,12 @@ import { DeviceV2, DeviceV3 } from "./utils/lunii/deviceInfo";
 export const state = observable({
   luniiHandle: null as FileSystemDirectoryHandle | null,
   device: null as DeviceV2 | DeviceV3 | null,
+  keyPackReference: null as {
+    uuid: string;
+    key: string;
+    iv: string;
+  } | null,
+
   isFfmpegLoaded: false,
   colorScheme: "light" as "light" | "dark",
 

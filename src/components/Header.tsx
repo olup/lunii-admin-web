@@ -19,16 +19,18 @@ import {
 } from "@tabler/icons-react";
 import { useInstallPack, useSyncMetadataMutation } from "../queries";
 import { state, switchColorScheme } from "../store";
-import { v3KeyPacks } from "../utils/v3KeyPacks";
+import { v3KeyPacks } from "../utils/lunii/v3KeyPacks";
 
 export const Header = () => {
   const colorScheme = state.colorScheme.use();
 
   const doInstallPack = useInstallPack();
   const device = state.device.use();
+
+  const keyPackReference = state.keyPackReference.use();
   const canInstallPack =
     device.version === "V2" ||
-    (device.version === "V3" && device.keyPackReference !== null);
+    (device.version === "V3" && keyPackReference !== null);
 
   const { mutate: syncMetadata } = useSyncMetadataMutation();
 
