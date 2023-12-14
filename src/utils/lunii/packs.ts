@@ -2,7 +2,7 @@ import { parse, stringify } from "yaml";
 import { getLuniiStoreDb } from "../db";
 import { getFileHandleFromPath, readFileAsText, writeFile } from "../fs";
 import { PackMetadata } from "./types";
-import { decipherFirstBlockCommonKey, v2CommonKey } from "../cipher";
+import { decryptFirstBlock, v2CommonKey } from "../cipher";
 import { uuidToRef } from "../generators";
 import { stripHtmlTags } from "..";
 import { decryptXxtea } from "../crypto/xxtea";
@@ -183,10 +183,7 @@ export const getPackFirstRaster = async (
     .getFile()
     .then((f) => f.arrayBuffer())
     .then((ab) => new Uint8Array(ab));
-  const decodedRi = await decipherFirstBlockCommonKey(
-    ri,
-    decryptXxtea(v2CommonKey)
-  );
+  const decodedRi = await decryptFirstBlock(ri, decryptXxtea(v2CommonKey));
   const fistRasterAdress = new TextDecoder()
     .decode(decodedRi.slice(0, 12))
     .replace("\\", "/");
@@ -199,5 +196,5 @@ export const getPackFirstRaster = async (
     .then((f) => f.arrayBuffer())
     .then((ab) => new Uint8Array(ab));
 
-  return decipherFirstBlockCommonKey(raster, decryptXxtea(v2CommonKey));
+  return decryptFirstBlock(raster, decryptXxtea(v2CommonKey));
 };

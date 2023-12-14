@@ -36,32 +36,35 @@ export const Header = () => {
 
   return (
     <Flex py={5} align="center">
-      <Popover width={500} position="bottom-start" shadow="md">
-        <Popover.Target>
-          <Button
-            color={canInstallPack ? "blue" : "orange"}
-            leftIcon={
-              canInstallPack ? (
-                <IconUpload size="1rem" />
-              ) : (
-                <IconAlertTriangle size="1rem" />
-              )
-            }
-            onClick={() => canInstallPack && doInstallPack()}
-          >
-            Installer des packs
-          </Button>
-        </Popover.Target>
-        <Popover.Dropdown style={{ border: "1px solid orange" }}>
-          <Text mb="sm">
-            Pour installer des packs custom sur une Lunii V3, l'un de ces packs
-            officiel doit être installé:
-          </Text>
-          {v3KeyPacks.map((pack) => (
-            <Text fw="bold">{pack.name}</Text>
-          ))}
-        </Popover.Dropdown>
-      </Popover>
+      {!canInstallPack && (
+        <Popover width={500} position="bottom-start" shadow="md">
+          <Popover.Target>
+            <Button color="orange" leftIcon={<IconAlertTriangle size="1rem" />}>
+              Installer des packs
+            </Button>
+          </Popover.Target>
+          <Popover.Dropdown style={{ border: "1px solid orange" }}>
+            <Text mb="sm">
+              Pour installer des packs custom sur une Lunii V3, l'un de ces
+              packs officiel doit être installé:
+            </Text>
+            {v3KeyPacks.map((pack) => (
+              <Text key={pack.uuid} fw="bold">
+                {pack.name}
+              </Text>
+            ))}
+          </Popover.Dropdown>
+        </Popover>
+      )}
+
+      {!!canInstallPack && (
+        <Button
+          leftIcon={<IconUpload size="1rem" />}
+          onClick={() => doInstallPack()}
+        >
+          Installer des packs
+        </Button>
+      )}
 
       <Space w={10} />
       <Tooltip

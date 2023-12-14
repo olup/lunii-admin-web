@@ -18,7 +18,7 @@ import {
   uuidToRef,
 } from "../generators";
 import { generateBinaryFromAssetIndex } from "../generators/asset";
-import { v2GenerateBtBinary } from "../generators/bt";
+import { v2GenerateBtBinary, v3GenerateBtBinary } from "../generators/bt";
 import { generateLiBinary } from "../generators/li";
 import { generateNiBinary } from "../generators/ni";
 import { unzip } from "../zip";
@@ -27,6 +27,7 @@ import { PackMetadata, StudioPack } from "./types";
 import { encryptXxtea } from "../crypto/xxtea";
 import { DeviceV2, DeviceV3 } from "./deviceInfo";
 import { encryptAes } from "../crypto/aes";
+import { hexStringToUint8Array } from "../hex";
 
 export const installPack = async (
   archive: FileSystemFileHandle,
@@ -35,10 +36,18 @@ export const installPack = async (
   // identify the encryption method according to the device
   let encrypt: (block: Uint8Array) => Promise<Uint8Array | null>;
 
-  if (device.version === "V2") encrypt = encryptXxtea(v2CommonKey);
-  else if (device.version === "V3")
-    encrypt = encryptAes(new Uint8Array(), new Uint8Array());
-  else throw new Error("Unknown device version");
+  if (device.version === "V2") {
+    encrypt = encryptXxtea(v2CommonKey);
+  } else if (device.version === "V3") {
+    const keyPackReference = state.keyPackReference.peek();
+    if (!keyPackReference) throw new Error("No key pack reference");
+    encrypt = encryptAes(
+      hexStringToUint8Array(keyPackReference.key),
+      hexStringToUint8Array(keyPackReference.iv)
+    );
+  } else {
+    throw new Error("Unknown device version");
+  }
 
   state.installation.step.set("UNZIPPING");
 
@@ -93,15 +102,19 @@ export const installPack = async (
 
     const liBinary = generateLiBinary(listNodesList, pack.stageNodes);
 
-    const btBinary = await v2GenerateBtBinary(
-      await encryptFirstBlock(riBinary, encrypt),
-      (device as DeviceV2).specificKey
-    );
+    const btBinary =
+      device.version == "V3"
+        ? await v3GenerateBtBinary()
+        : await v2GenerateBtBinary(
+            await encryptFirstBlock(riBinary, encrypt),
+            (device as DeviceV2).specificKey
+          );
 
     if (!btBinary) throw new Error("Failed to generate bt binary");
 
     // write binaries
     await writeFile(outDir, "ni", niBinary, true);
+    console.log("about to write li, ri, si");
     await writeFile(
       outDir,
       "li",

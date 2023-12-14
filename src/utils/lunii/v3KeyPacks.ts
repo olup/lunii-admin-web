@@ -1,17 +1,17 @@
 import { getPackUuids } from "./packs";
 
-export const v3KeyPacks = [
-  {
-    name: "Les aventures de Suzanne et Gaston",
-    uuid: "v3:packs:1",
-    key: "v3:packs:1",
-    iv: "v3:packs:1",
-  },
-];
+console.log(import.meta.env.VITE_KEY_PACKS);
+export const v3KeyPacks: {
+  uuid: string;
+  key: string;
+  iv: string;
+  name: string;
+}[] = JSON.parse(import.meta.env.VITE_KEY_PACKS || "[]");
 
 export const getV3KeyPack = async (luniiHandle: FileSystemDirectoryHandle) => {
   const packUuids = await getPackUuids(luniiHandle);
-  const keyPack = v3KeyPacks.find((pack) => packUuids.includes(pack.uuid));
-  if (!keyPack) return null;
-  return keyPack;
+  const keyPack = v3KeyPacks.find((pack) =>
+    packUuids.includes(pack.uuid.toLowerCase())
+  );
+  return keyPack || null;
 };

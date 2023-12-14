@@ -1,27 +1,62 @@
 export const encryptAes =
-  (key: Uint8Array, iv: Uint8Array) => async (data: Uint8Array) => {
-    // Ensure the key and IV lengths are appropriate for AES 128 CBC
-    if (key.length !== 16 || iv.length !== 16) {
-      throw new Error("Key and IV must be 16 bytes long for AES 128 CBC");
+  (key: Uint8Array, iv: Uint8Array) =>
+  async (bytes: Uint8Array): Promise<Uint8Array> => {
+    if (bytes.length < 512) {
+      const bytes16 = 16 - (bytes.length % 16);
+      if (bytes16 < 16) {
+        const liTmp = bytes;
+        bytes = new Uint8Array(liTmp.length + bytes16);
+        bytes.set(liTmp);
+      }
     }
 
-    // Import key and IV as CryptoKey
-    const importedKey = await crypto.subtle.importKey(
+    const sKey = await crypto.subtle.importKey(
       "raw",
       key,
-      "AES-CBC",
+      { name: "AES-CBC", length: 128 },
       false,
-      ["encrypt"]
-    );
-    const importedIV = iv.buffer.slice(0, 16); // Take only the first 16 bytes of IV
-
-    // Encrypt the file chunk
-    const encryptedChunk = await crypto.subtle.encrypt(
-      { name: "AES-CBC", iv: importedIV },
-      importedKey,
-      data
+      ["encrypt", "decrypt"]
     );
 
-    // Convert the result back to Uint8Array
-    return new Uint8Array(encryptedChunk);
+    const encryptedBytes = await crypto.subtle.encrypt(
+      {
+        name: "AES-CBC",
+        iv,
+        length: 128,
+      },
+      sKey,
+      bytes
+    );
+
+    // remove the last 16 bytes which is a padding
+    return new Uint8Array(encryptedBytes.slice(0, -16));
+  };
+
+export const decryptAes =
+  (key: Uint8Array, iv: Uint8Array) =>
+  async (encryptedBytes: Uint8Array): Promise<Uint8Array> => {
+    const sKey = await crypto.subtle.importKey(
+      "raw",
+      key,
+      { name: "AES-CBC", length: 128 },
+      false,
+      ["encrypt", "decrypt"]
+    );
+
+    // Add padding back to the encrypted bytes.
+    // Todo: this is not the correct way to do it
+    const paddedEncryptedBytes = new Uint8Array(encryptedBytes.length + 16);
+    paddedEncryptedBytes.set(encryptedBytes);
+
+    const decryptedBytes = await crypto.subtle.decrypt(
+      {
+        name: "AES-CBC",
+        iv,
+        length: 128,
+      },
+      sKey,
+      paddedEncryptedBytes
+    );
+
+    return new Uint8Array(decryptedBytes);
   };
