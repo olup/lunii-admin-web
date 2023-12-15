@@ -26,7 +26,6 @@ const isPropperAudioFormat = (byteArray: Uint8Array) => {
   if (details === null) return false;
   if (details.channelCount !== 1) return false;
   if (details.frameRate !== 44100) return false;
-  // if (!isMP3CBR(byteArray, 44100)) return false;
 
   return true;
 };

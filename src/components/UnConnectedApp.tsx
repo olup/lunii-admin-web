@@ -1,7 +1,8 @@
-import { Badge, Button, Center, Container, Text } from "@mantine/core";
+import { Alert, Badge, Button, Center, Container, Text } from "@mantine/core";
 import { getLuniiHandle } from "../utils";
 import { getDeviceInfo } from "../utils/lunii/deviceInfo";
 import { state } from "../store";
+import { IconAlertCircle } from "@tabler/icons-react";
 
 export const UnconnectedApp = () => {
   return (
@@ -27,12 +28,15 @@ export const UnconnectedApp = () => {
         >
           Ouvrir ma Lunii
         </Button>
-
-        <Text mb="md">Un logiciel de Olup</Text>
-        <Text>Rendu possible grace au travail extraordinaire de </Text>
-        <Text>🥇 R. Daneel Olivaw 🥇</Text>
-        <Text mb="md">🥇 Frederir 🥇</Text>
-        <Text mb="md">Et tout le support de la communauté Lunii</Text>
+        <Alert my="lg" radius="md" p="xl">
+          <Text mb="md">Un outil par Olup</Text>
+          <Text mb="sm">
+            Rendu possible grace au travail extraordinaire de{" "}
+          </Text>
+          <Text>🥇 R. Daneel Olivaw</Text>
+          <Text>🥇 Frederir</Text>
+          <Text mb="md"> ❤️ Et tout le support de la communauté Lunii</Text>
+        </Alert>
       </Center>
     </Container>
   );
