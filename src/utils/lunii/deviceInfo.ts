@@ -11,7 +11,7 @@ export type DeviceV2 = {
 
 export type DeviceV3 = {
   version: "V3";
-  serialNumber: string;
+  serialNumber: Uint8Array;
   firmwareVersion: string;
   btBin: Uint8Array;
   easKey: Uint8Array;
@@ -78,19 +78,21 @@ function reverseUint8ArrayBlocks(inputArray: Uint8Array): Uint8Array {
 }
 
 const getDeviceInfoV3 = async (mdFile: Uint8Array): Promise<DeviceV3> => {
+  const snuLength = 24;
+  const keyLength = 16;
   const firmwareVersion = new TextDecoder("utf-8").decode(
     mdFile.slice(2, 2 + 6)
   );
-  const SNU = mdFile.slice(26, 26 + 24);
-  console.log(SNU);
-  const serialNumber = new TextDecoder("utf-8").decode(SNU);
+  const serialNumber = mdFile.slice(26, 26 + snuLength);
 
-  const btBin = mdFile.slice(64, 64 + 32);
+  const btBinClear = new Uint8Array(32);
+  btBinClear.set(serialNumber);
+  btBinClear.set(serialNumber.slice(0, 32 - snuLength), snuLength);
 
-  const easKeyRaw = SNU.slice(0, 16);
+  const btBin = mdFile.slice(64, 64 + keyLength * 2);
 
-  const ivRaw = new Uint8Array(16).fill(0);
-  ivRaw.set(SNU.slice(16, 24));
+  const easKeyRaw = btBinClear.slice(0, keyLength);
+  const ivRaw = btBinClear.slice(keyLength, keyLength * 2);
 
   const easKey = reverseUint8ArrayBlocks(easKeyRaw);
   const iv = reverseUint8ArrayBlocks(ivRaw);
