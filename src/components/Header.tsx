@@ -1,5 +1,6 @@
 import { ActionIcon, Badge, Button, Flex, Space, Tooltip } from "@mantine/core";
 import {
+  IconAlertTriangle,
   IconBrandGithubFilled,
   IconExternalLink,
   IconMoon,
@@ -12,6 +13,7 @@ import { state, switchColorScheme } from "../store";
 
 export const Header = () => {
   const colorScheme = state.colorScheme.use();
+  const device = state.device.peek();
 
   const doInstallPack = useInstallPack();
   const { mutate: syncMetadata } = useSyncMetadataMutation();
@@ -53,6 +55,11 @@ export const Header = () => {
 
       <Badge>{__COMMIT_HASH__}</Badge>
       <Space w={10} />
+      {device.version === "V2" && !device.stable && (
+        <ActionIcon variant="light" color="orange" size="lg">
+          <IconAlertTriangle size="1rem" />
+        </ActionIcon>
+      )}
       <ActionIcon variant="light" size="lg" onClick={switchColorScheme}>
         {colorScheme === "dark" ? (
           <IconSun size="1rem" />
@@ -70,17 +77,6 @@ export const Header = () => {
       >
         <IconBrandGithubFilled size="1rem" />
       </ActionIcon>
-
-      {/* <Space w={10} />
-      <ActionIcon
-        variant="light"
-        size="lg"
-        component="a"
-        href=""
-        target="_blank"
-      >
-        <IconBrandDiscordFilled size="1rem" />
-      </ActionIcon> */}
     </Flex>
   );
 };

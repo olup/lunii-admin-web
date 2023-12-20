@@ -1,12 +1,13 @@
 import { v2ComputeSpecificKeyFromUUID } from "../cipher";
 
-export type modelVersion = "V2" | "V3";
+export type modelVersion = "V1" | "V2" | "V3";
 export type DeviceV2 = {
   version: "V2";
   uuid: Uint8Array;
   specificKey: Uint8Array;
   serialNumber: string;
   firmwareVersion: string;
+  stable: boolean;
 };
 
 export type DeviceV3 = {
@@ -21,6 +22,9 @@ export type DeviceV3 = {
 export const getDeviceModel = (mdFile: Uint8Array): modelVersion => {
   const modelKey = mdFile.slice(0, 2);
 
+  if (modelKey[0] === 1 && modelKey[1] === 0) {
+    return "V1";
+  }
   if (modelKey[0] === 3 && modelKey[1] === 0) {
     return "V2";
   }
@@ -56,6 +60,7 @@ const getDeviceInfoV2 = (mdFile: Uint8Array): DeviceV2 => {
     serialNumber,
     firmwareVersion,
     specificKey,
+    stable: true,
   } as DeviceV2;
 };
 
@@ -115,6 +120,13 @@ export const getDeviceInfo = async (luniiHandle: FileSystemDirectoryHandle) => {
   const deviceInfo = await deviceInfoHandle.getFile();
   const buffer = await deviceInfo.arrayBuffer();
   const model = getDeviceModel(new Uint8Array(buffer));
+
+  if (model === "V1") {
+    // this should be very very edge, as V1 should not be mountable
+    const device = getDeviceInfoV2(new Uint8Array(buffer));
+    device.stable = false;
+    return device;
+  }
 
   if (model === "V2") {
     return getDeviceInfoV2(new Uint8Array(buffer));
