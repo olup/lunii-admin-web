@@ -1,6 +1,7 @@
 import { v2ComputeSpecificKeyFromUUID } from "../cipher";
 
-export type modelVersion = "V1" | "V2" | "V3";
+export type mdFileVersion = "1" | "2" | "3";
+export type modelVersion = "V2" | "V3";
 export type DeviceV2 = {
   version: "V2";
   uuid: Uint8Array;
@@ -19,17 +20,17 @@ export type DeviceV3 = {
   iv: Uint8Array;
 };
 
-export const getDeviceModel = (mdFile: Uint8Array): modelVersion => {
+export const getDeviceModel = (mdFile: Uint8Array): mdFileVersion => {
   const modelKey = mdFile.slice(0, 2);
 
   if (modelKey[0] === 1 && modelKey[1] === 0) {
-    return "V1";
+    return "1";
   }
   if (modelKey[0] === 3 && modelKey[1] === 0) {
-    return "V2";
+    return "2";
   }
   if (modelKey[0] === 6 && modelKey[1] === 0) {
-    return "V3";
+    return "3";
   } else throw new Error("Unknown device model");
 };
 
@@ -119,19 +120,19 @@ export const getDeviceInfo = async (luniiHandle: FileSystemDirectoryHandle) => {
   const deviceInfoHandle = await luniiHandle.getFileHandle(".md");
   const deviceInfo = await deviceInfoHandle.getFile();
   const buffer = await deviceInfo.arrayBuffer();
-  const model = getDeviceModel(new Uint8Array(buffer));
+  const mdVersion = getDeviceModel(new Uint8Array(buffer));
 
-  if (model === "V1") {
+  if (mdVersion === "1") {
     // this should be very very edge, as V1 should not be mountable
     const device = getDeviceInfoV2(new Uint8Array(buffer));
     device.stable = false;
     return device;
   }
 
-  if (model === "V2") {
+  if (mdVersion === "2") {
     return getDeviceInfoV2(new Uint8Array(buffer));
   }
-  if (model === "V3") {
+  if (mdVersion === "3") {
     return getDeviceInfoV3(new Uint8Array(buffer));
   }
 
