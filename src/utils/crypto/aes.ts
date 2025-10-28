@@ -14,7 +14,7 @@ export const encryptAes =
 
     const sKey = await crypto.subtle.importKey(
       "raw",
-      key,
+      key.buffer.slice(key.byteOffset, key.byteOffset + key.byteLength),
       { name: "AES-CBC" },
       false,
       ["encrypt", "decrypt"]
@@ -23,10 +23,10 @@ export const encryptAes =
     const encryptedBytes = await crypto.subtle.encrypt(
       {
         name: "AES-CBC",
-        iv,
+        iv: iv.buffer.slice(iv.byteOffset, iv.byteOffset + iv.byteLength),
       },
       sKey,
-      bytes
+      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
     );
 
     console.log("bytes length", bytes.byteLength);
@@ -41,7 +41,7 @@ export const decryptAes =
   async (encryptedBytes: Uint8Array): Promise<Uint8Array> => {
     const sKey = await crypto.subtle.importKey(
       "raw",
-      key,
+      key.buffer.slice(key.byteOffset, key.byteOffset + key.byteLength),
       { name: "AES-CBC", length: 128 },
       false,
       ["encrypt", "decrypt"]
@@ -55,11 +55,14 @@ export const decryptAes =
     const decryptedBytes = await crypto.subtle.decrypt(
       {
         name: "AES-CBC",
-        iv,
+        iv: iv.buffer.slice(iv.byteOffset, iv.byteOffset + iv.byteLength),
         length: 128,
       },
       sKey,
-      paddedEncryptedBytes
+      paddedEncryptedBytes.buffer.slice(
+        paddedEncryptedBytes.byteOffset,
+        paddedEncryptedBytes.byteOffset + paddedEncryptedBytes.byteLength
+      )
     );
 
     return new Uint8Array(decryptedBytes);

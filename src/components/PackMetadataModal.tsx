@@ -54,7 +54,17 @@ export const PackMetadataModal: FC<{
         <Box p={10} px={40}>
           <Image
             radius="md"
-            src={URL.createObjectURL(new Blob([imageUint8]))}
+            src={URL.createObjectURL(
+              new Blob(
+                [
+                  imageUint8.buffer.slice(
+                    imageUint8.byteOffset,
+                    imageUint8.byteOffset + imageUint8.byteLength
+                  ),
+                ],
+                { type: "image/bmp" }
+              )
+            )}
             style={{ width: "100%", height: "auto" }}
           />
         </Box>

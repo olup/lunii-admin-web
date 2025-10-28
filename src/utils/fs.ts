@@ -48,7 +48,14 @@ export const writeFile = async (
 ) => {
   const fileHandle = await getFileHandleFromPath(root, path, createIfNotExists);
   const writable = await fileHandle.createWritable();
-  await writable.write(content);
+  const chunk =
+    content instanceof Uint8Array
+      ? content.buffer.slice(
+          content.byteOffset,
+          content.byteOffset + content.byteLength
+        )
+      : content;
+  await writable.write(chunk);
   await writable.close();
 };
 
