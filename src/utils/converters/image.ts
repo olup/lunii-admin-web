@@ -1,13 +1,10 @@
+import { toArrayBuffer } from "../buffer";
+
 export const convertImageToBmp4 = async (blob: Blob): Promise<Blob> => {
   const img = await getImage(blob);
   const ctx = await resizeAndFlip(img);
   const bmp = await create4BitGrayscaleBMP(ctx);
-  return new Blob(
-    [
-      bmp.buffer.slice(bmp.byteOffset, bmp.byteOffset + bmp.byteLength),
-    ],
-    { type: "image/bmp" }
-  );
+  return new Blob([toArrayBuffer(bmp)], { type: "image/bmp" });
 };
 
 const getImage = async (blob: Blob): Promise<HTMLImageElement> => {

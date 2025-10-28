@@ -19,6 +19,7 @@ import {
 } from "../queries";
 import { uuidToRef } from "../utils/generators";
 import { PackMetadata } from "../utils/lunii/types";
+import { toArrayBuffer } from "../utils/buffer";
 
 export const PackMetadataModal: FC<{
   packUuid: string;
@@ -55,15 +56,7 @@ export const PackMetadataModal: FC<{
           <Image
             radius="md"
             src={URL.createObjectURL(
-              new Blob(
-                [
-                  imageUint8.buffer.slice(
-                    imageUint8.byteOffset,
-                    imageUint8.byteOffset + imageUint8.byteLength
-                  ),
-                ],
-                { type: "image/bmp" }
-              )
+              new Blob([toArrayBuffer(imageUint8)], { type: "image/bmp" })
             )}
             style={{ width: "100%", height: "auto" }}
           />
