@@ -21,17 +21,24 @@ export type DeviceV3 = {
 };
 
 export const getDeviceModel = (mdFile: Uint8Array): mdFileVersion => {
-  const modelKey = mdFile.slice(0, 2);
+  const view = new DataView(
+    mdFile.buffer,
+    mdFile.byteOffset,
+    mdFile.byteLength
+  );
+  const mdVersion = view.getUint16(0, true);
 
-  if (modelKey[0] === 1 && modelKey[1] === 0) {
+  if (mdVersion === 1) {
     return "1";
   }
-  if (modelKey[0] === 3 && modelKey[1] === 0) {
+  if (mdVersion === 3) {
     return "2";
   }
-  if (modelKey[0] === 6 && modelKey[1] === 0) {
+  if (mdVersion === 6 || mdVersion === 7) {
     return "3";
-  } else throw new Error("Unknown device model");
+  }
+
+  throw new Error(`Unknown device model metadata version: ${mdVersion}`);
 };
 
 const getDeviceInfoV2 = (mdFile: Uint8Array): DeviceV2 => {
@@ -84,31 +91,54 @@ function reverseUint8ArrayBlocks(inputArray: Uint8Array): Uint8Array {
 }
 
 const getDeviceInfoV3 = async (mdFile: Uint8Array): Promise<DeviceV3> => {
-  const snuLength = 24;
-  const keyLength = 16;
-  const firmwareVersion = new TextDecoder("utf-8").decode(
-    mdFile.slice(2, 2 + 6)
+  const view = new DataView(
+    mdFile.buffer,
+    mdFile.byteOffset,
+    mdFile.byteLength
   );
-  const serialNumber = mdFile.slice(26, 26 + snuLength);
+  const mdVersion = view.getUint16(0, true);
+  const firmwareVersion = new TextDecoder("utf-8")
+    .decode(mdFile.slice(2, 2 + 6))
+    .replace(/\0/g, "")
+    .trim();
 
-  const btBinClear = new Uint8Array(32);
-  btBinClear.set(serialNumber);
-  btBinClear.set(serialNumber.slice(0, 32 - snuLength), snuLength);
+  const serialRaw = new TextDecoder("utf-8")
+    .decode(mdFile.slice(26, 26 + 14))
+    .replace(/\0/g, "");
+  const serialDigits = serialRaw.match(/\d+/)?.[0] ?? "";
+  if (!serialDigits) {
+    throw new Error("Unable to parse device serial number");
+  }
 
-  const btBin = mdFile.slice(64, 64 + keyLength * 2);
+  const encoder = new TextEncoder();
+  const serialBytesFull = encoder.encode(serialDigits);
+  const serialBytes14 = new Uint8Array(14);
+  serialBytes14.set(serialBytesFull.slice(0, 14));
+  const serialBytes8 = new Uint8Array(8);
+  serialBytes8.set(serialBytesFull.slice(0, 8));
 
-  const easKeyRaw = btBinClear.slice(0, keyLength);
-  const ivRaw = btBinClear.slice(keyLength, keyLength * 2);
+  const keySection = mdFile.slice(64, 64 + 32);
+  const deviceKey = new Uint8Array(64);
 
-  const easKey = reverseUint8ArrayBlocks(easKeyRaw);
-  const iv = reverseUint8ArrayBlocks(ivRaw);
+  if (mdVersion === 6) {
+    deviceKey.set(serialBytes14, 0);
+    deviceKey.set(serialBytes8, 24);
+    deviceKey.set(keySection, 32);
+  } else if (mdVersion === 7) {
+    deviceKey.set(keySection, 0);
+    deviceKey.set(serialBytes14, 32);
+    deviceKey.set(serialBytes8, 56);
+  } else {
+    throw new Error(`Unsupported V3 metadata version: ${mdVersion}`);
+  }
 
-  console.log("easKey", easKeyRaw, easKey);
-  console.log("iv", ivRaw, iv);
+  const easKey = reverseUint8ArrayBlocks(deviceKey.slice(0, 16));
+  const iv = reverseUint8ArrayBlocks(deviceKey.slice(16, 32));
+  const btBin = deviceKey.slice(32);
 
   return {
     version: "V3",
-    serialNumber,
+    serialNumber: serialBytes14,
     firmwareVersion,
     btBin,
     easKey,
