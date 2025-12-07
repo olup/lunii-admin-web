@@ -14,6 +14,11 @@ export const initPostHog = () => {
         //   recordCrossOriginIframes: true,
         // },
       });
+      
+      // Set global property to identify this project
+      posthog.register({
+        project: "lunii-admin",
+      });
     } catch (error) {
       console.error("Failed to initialize PostHog:", error);
     }
