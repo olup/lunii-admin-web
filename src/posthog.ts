@@ -6,13 +6,17 @@ export const initPostHog = () => {
   const posthogHost = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
 
   if (posthogKey && posthogHost) {
-    posthog.init(posthogKey, {
-      api_host: posthogHost,
-      // Enable session recording if needed
-      // session_recording: {
-      //   recordCrossOriginIframes: true,
-      // },
-    });
+    try {
+      posthog.init(posthogKey, {
+        api_host: posthogHost,
+        // Enable session recording if needed
+        // session_recording: {
+        //   recordCrossOriginIframes: true,
+        // },
+      });
+    } catch (error) {
+      console.error("Failed to initialize PostHog:", error);
+    }
   }
 };
 
