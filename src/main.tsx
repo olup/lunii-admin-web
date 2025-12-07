@@ -9,7 +9,10 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import { Notifications } from "@mantine/notifications";
 import { state } from "./store.ts";
 import BetaBadge from "./components/BetaTag.tsx";
+import { initPostHog } from "./posthog.ts";
+
 enableReactUse();
+initPostHog();
 
 const queryClient = new QueryClient();
 
