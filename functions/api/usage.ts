@@ -1,7 +1,6 @@
-import { usageEvents } from "../../src/usage-events.ts";
+import { randomIDPattern, usageEvents } from "../../src/usage-events.ts";
 
 const allowedEvents = new Set<string>(usageEvents);
-const messageID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 export async function onRequestPost({ request, env }: {
   request: Request;
@@ -13,7 +12,14 @@ export async function onRequestPost({ request, env }: {
 
   const event = request.headers.get("X-Lunii-Event");
   const id = request.headers.get("X-Lunii-Message-Id");
-  if (!event || !allowedEvents.has(event) || !id || !messageID.test(id)) {
+  const browserId = request.headers.get("X-Lunii-Browser-Id");
+  if (
+    !event ||
+    !allowedEvents.has(event) ||
+    !id ||
+    !randomIDPattern.test(id) ||
+    (browserId !== null && !randomIDPattern.test(browserId))
+  ) {
     return new Response(null, { status: 400 });
   }
 
@@ -27,7 +33,12 @@ export async function onRequestPost({ request, env }: {
         "Authorization": `Bearer ${key}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ type: "track", name: event, message_id: id }),
+      body: JSON.stringify({
+        type: "track",
+        name: event,
+        message_id: id,
+        actor_id: browserId ?? undefined,
+      }),
       redirect: "manual",
       signal: AbortSignal.timeout(3000),
     });

@@ -9,8 +9,9 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import { Notifications } from "@mantine/notifications";
 import { state } from "./store.ts";
 import BetaBadge from "./components/BetaTag.tsx";
+import { UsagePreferences } from "./components/UsagePreferences";
 import { initPostHog } from "./posthog.ts";
-import { captureUsage } from "./usage";
+import { captureUsage, usageEnabled } from "./usage";
 
 enableReactUse();
 initPostHog();
@@ -35,6 +36,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <WithMantine>
         <BetaBadge />
+        {usageEnabled && <UsagePreferences />}
         <App />
       </WithMantine>
     </QueryClientProvider>
