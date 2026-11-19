@@ -20,6 +20,8 @@ export async function onRequestPost({ request, env }: {
   const key = env.PORCUPINE_USAGE_WRITE_KEY;
   if (!key) return new Response(null, { status: 503 });
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 3000);
   try {
     const response = await fetch("https://api.getporcupine.eu/ingest/v1/events", {
       method: "POST",
@@ -29,10 +31,15 @@ export async function onRequestPost({ request, env }: {
       },
       body: JSON.stringify({ type: "track", name: event, message_id: id }),
       redirect: "error",
-      signal: AbortSignal.timeout(3000),
+      signal: controller.signal,
     });
-    return new Response(null, { status: response.ok ? 204 : 502 });
-  } catch {
+    if (response.ok) return new Response(null, { status: 204 });
+    console.warn("Porcupine rejected Lunii usage event", response.status);
     return new Response(null, { status: 502 });
+  } catch (error) {
+    console.warn("Lunii usage relay failed", error instanceof Error ? error.name : "unknown");
+    return new Response(null, { status: 502 });
+  } finally {
+    clearTimeout(timeout);
   }
 }
