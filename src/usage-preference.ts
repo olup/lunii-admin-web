@@ -39,7 +39,7 @@ export function getUsagePreference(): UsagePreference | undefined {
       randomIDPattern.test(preference.browserId)
     ) return { kind: "allowed", expiresAt, browserId: preference.browserId };
   } catch {
-    // Keep capture without a browser ID when storage is unavailable.
+    // Treat blocked or unreadable storage as missing consent.
   }
 }
 

@@ -1,5 +1,6 @@
 import { Button, Container, Group, Paper, Text } from "@mantine/core";
 import { useState } from "react";
+import { captureUsage, stopUsage } from "../usage";
 import { getUsagePreference, saveUsagePreference } from "../usage-preference";
 import type { UsageChoice } from "../usage-preference";
 
@@ -10,7 +11,10 @@ export function UsagePreferences() {
   function choose(choice: UsageChoice) {
     const saved = saveUsagePreference(choice);
     setSaveFailed(!saved);
-    if (saved) setExpanded(false);
+    if (!saved) return;
+    if (choice === "allowed") captureUsage("lunii_app_opened");
+    else stopUsage();
+    setExpanded(false);
   }
 
   return (
@@ -19,8 +23,8 @@ export function UsagePreferences() {
         <Paper withBorder p="md" radius="md">
           <Text weight={600} size="sm">Statistiques Porcupine</Text>
           <Text size="sm" mt={4}>
-            Vous pouvez autoriser un identifiant aléatoire conservé six mois dans ce navigateur
-            pour compter les visites répétées. Vous pouvez changer d’avis à tout moment.
+            Autorisez les statistiques d’utilisation et un identifiant aléatoire conservé six
+            mois dans ce navigateur. Vous pouvez changer d’avis à tout moment.
           </Text>
           <Group mt="sm" spacing="xs">
             <Button variant="default" size="xs" onClick={() => choose("allowed")}>

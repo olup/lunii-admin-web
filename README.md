@@ -15,8 +15,8 @@ A browser based tool to manage Lunii devices.
 
 ## Porcupine usage events
 
-To enable capture on Cloudflare Pages, set `VITE_PORCUPINE_USAGE_ENABLED=true` at build time. Add `PORCUPINE_USAGE_WRITE_KEY` as a secret for the Pages Function. Use a Porcupine API key with `events:write` for the Lunii project. Keep the key out of `VITE_` variables and source control.
+To enable capture on Cloudflare Pages, set `VITE_PORCUPINE_BROWSER_KEY` at build time. Use the public ingestion key for the Lunii project. The browser SDK sends events directly to `https://api.getporcupine.eu`. A private API key belongs on the server.
 
-Capture counts app opens, device connection attempts and successes, successful pack installs, removals and moves, and metadata syncs. Each event contains its name and a random message ID. Visitors who opt in under **Statistiques Porcupine** also get a first-party, randomly generated browser ID. The Pages Function sends it as the Porcupine `actor_id`. The browser keeps the preference for 180 days. Refusing or withdrawing consent removes the browser ID from local storage and future events still contribute to totals without a browser ID.
+After opt-in under **Statistiques Porcupine**, capture counts app opens, device connection attempts and successes, successful pack installs, removals and moves, and metadata syncs. The SDK uses local storage and the app's random browser ID. The preference lasts 180 days. Withdraw consent in the same menu to stop capture and clear the browser ID.
 
-Count distinct nonempty `distinct_id` values to count opted-in browsers. Events captured before opt-in stay without a browser ID. This tracks browsers, and clearing site data or using a different browser creates a separate count. The existing PostHog setup is independent of this setting.
+Count distinct nonempty `distinct_id` values for opted-in browsers. Group by `json_extract_string(context, '$.session_id')` for visits. Historical events keep the IDs they were captured with.

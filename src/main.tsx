@@ -10,11 +10,10 @@ import { Notifications } from "@mantine/notifications";
 import { state } from "./store.ts";
 import BetaBadge from "./components/BetaTag.tsx";
 import { UsagePreferences } from "./components/UsagePreferences";
-import { initPostHog } from "./posthog.ts";
-import { captureUsage, usageEnabled } from "./usage";
+import { captureUsage, clearLegacyUsageStorage, usageEnabled } from "./usage";
 
 enableReactUse();
-initPostHog();
+clearLegacyUsageStorage();
 captureUsage("lunii_app_opened");
 
 const queryClient = new QueryClient();
