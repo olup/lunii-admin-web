@@ -3,6 +3,7 @@ import { getLuniiHandle } from "../utils";
 import { getDeviceInfo } from "../utils/lunii/deviceInfo";
 import { state } from "../store";
 import { IconFolderOpen } from "@tabler/icons-react";
+import { captureUsage } from "../usage";
 
 export const UnconnectedApp = () => {
   return (
@@ -18,6 +19,7 @@ export const UnconnectedApp = () => {
           mb="xl"
           leftIcon={<IconFolderOpen size="1rem" />}
           onClick={async () => {
+            captureUsage("lunii_device_connect_started");
             const handle = await getLuniiHandle();
             if (!handle) return;
 
@@ -25,6 +27,7 @@ export const UnconnectedApp = () => {
 
             await state.device.set(device);
             await state.luniiHandle.set(handle);
+            captureUsage("lunii_device_connected");
           }}
         >
           Ouvrir ma Lunii

@@ -1,6 +1,7 @@
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { resetInstallationState, state } from "./store";
+import { captureUsage } from "./usage";
 import { uuidToRef } from "./utils/generators";
 import { installPack } from "./utils/lunii/installPack";
 import {
@@ -22,7 +23,10 @@ export const useReorderPackMutation = () => {
     mutationKey: "reorderPacks",
     mutationFn: async (options: { from: number; to: number }) =>
       changePackPosition(state.luniiHandle.peek()!, options.from, options.to),
-    onSuccess: () => client.invalidateQueries("packs"),
+    onSuccess: (_, { from, to }) => {
+      if (from !== to) captureUsage("lunii_pack_reordered");
+      return client.invalidateQueries("packs");
+    },
     onError: (err) =>
       notifications.show({
         title: "Erreur",
@@ -56,7 +60,10 @@ export const useRemovePackMutation = () => {
         message: (err as Error).message,
         color: "red",
       }),
-    onSuccess: () => client.invalidateQueries("packs"),
+    onSuccess: () => {
+      captureUsage("lunii_pack_removed");
+      return client.invalidateQueries("packs");
+    },
   });
 };
 
@@ -75,6 +82,7 @@ export const useInstallPack = () => {
 
       for (const fileHandle of fileHandles) {
         await installPack(fileHandle, device);
+        captureUsage("lunii_pack_installed");
         installation.packInstallationProgress.doneCount.set(
           installation.packInstallationProgress.doneCount.peek() + 1
         );
@@ -102,12 +110,14 @@ export const useSyncMetadataMutation = () => {
   const client = useQueryClient();
   return useMutation({
     mutationFn: () => syncPacksMetadataFromStore(state.luniiHandle.peek()!),
-    onSuccess: () =>
+    onSuccess: () => {
+      captureUsage("lunii_metadata_synced");
       notifications.show({
         title: "Synchronisation terminée",
         message: "Les métadonnées ont été synchronisées avec succès",
         color: "green",
-      }),
+      });
+    },
     onError: (err) =>
       notifications.show({
         title: "Erreur",

@@ -12,3 +12,9 @@ A browser based tool to manage Lunii devices.
 - Change their apparition order
 - Delete packs
 - **Add new packs** with the STUdio format (you can use lunii-admin-builder to create them)
+
+## Porcupine usage events
+
+To enable capture on Cloudflare Pages, set `VITE_PORCUPINE_USAGE_ENABLED=true` at build time. Add `PORCUPINE_USAGE_WRITE_KEY` as a secret for the Pages Function. Use a Porcupine API key with `events:write` for the Lunii project. Keep the key out of `VITE_` variables and source control.
+
+Capture counts app opens, device connection attempts and successes, successful pack installs, removals and moves, and metadata syncs. Each event contains its name and a random message ID. Capture works alongside the existing PostHog setup.
