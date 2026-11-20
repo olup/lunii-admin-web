@@ -214,6 +214,9 @@ export const installPack = async (
       .catch((e) => {
         console.error("Failed to add pack uuid to the device index", e);
       });
+
+    const hasTitle = typeof pack.title === "string" && pack.title.trim() !== "";
+    return { hasTitle, archiveSize: file.size };
   } finally {
     // clean
     await root.removeEntry("temp", { recursive: true });

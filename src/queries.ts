@@ -24,7 +24,12 @@ export const useReorderPackMutation = () => {
     mutationFn: async (options: { from: number; to: number }) =>
       changePackPosition(state.luniiHandle.peek()!, options.from, options.to),
     onSuccess: (_, { from, to }) => {
-      if (from !== to) captureUsage("lunii_pack_reordered");
+      if (from !== to) {
+        captureUsage("lunii_pack_reordered", {
+          device_generation: state.device.peek()?.version,
+          move_direction: to < from ? "up" : "down",
+        });
+      }
       return client.invalidateQueries("packs");
     },
     onError: (err) =>
@@ -61,7 +66,7 @@ export const useRemovePackMutation = () => {
         color: "red",
       }),
     onSuccess: () => {
-      captureUsage("lunii_pack_removed");
+      captureUsage("lunii_pack_removed", { device_generation: state.device.peek()?.version });
       return client.invalidateQueries("packs");
     },
   });
@@ -81,8 +86,14 @@ export const useInstallPack = () => {
       installation.packInstallationProgress.totalCount.set(fileHandles.length);
 
       for (const fileHandle of fileHandles) {
-        await installPack(fileHandle, device);
-        captureUsage("lunii_pack_installed");
+        const startedAt = performance.now();
+        const { hasTitle, archiveSize } = await installPack(fileHandle, device);
+        captureUsage("lunii_pack_installed", {
+          device_generation: device.version,
+          has_pack_title: hasTitle,
+          archive_size_mib: Math.ceil(archiveSize / (1024 * 1024)),
+          install_duration_ms: Math.round(performance.now() - startedAt),
+        });
         installation.packInstallationProgress.doneCount.set(
           installation.packInstallationProgress.doneCount.peek() + 1
         );
@@ -111,7 +122,7 @@ export const useSyncMetadataMutation = () => {
   return useMutation({
     mutationFn: () => syncPacksMetadataFromStore(state.luniiHandle.peek()!),
     onSuccess: () => {
-      captureUsage("lunii_metadata_synced");
+      captureUsage("lunii_metadata_synced", { device_generation: state.device.peek()?.version });
       notifications.show({
         title: "Synchronisation terminée",
         message: "Les métadonnées ont été synchronisées avec succès",

@@ -27,7 +27,7 @@ export const UnconnectedApp = () => {
 
             await state.device.set(device);
             await state.luniiHandle.set(handle);
-            captureUsage("lunii_device_connected");
+            captureUsage("lunii_device_connected", { device_generation: device.version });
           }}
         >
           Ouvrir ma Lunii

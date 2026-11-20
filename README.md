@@ -15,8 +15,8 @@ A browser based tool to manage Lunii devices.
 
 ## Porcupine usage events
 
-To enable capture on Cloudflare Pages, set `VITE_PORCUPINE_BROWSER_KEY` at build time. Use the public ingestion key for the Lunii project. The browser SDK sends events directly to `https://api.getporcupine.eu`. A private API key belongs on the server.
+To enable usage events on Cloudflare Pages, set `VITE_PORCUPINE_BROWSER_KEY` to the Lunii project's public ingestion key at build time. The app sends events to `https://api.getporcupine.eu/ingest/v1/events`.
 
-After opt-in under **Statistiques Porcupine**, capture counts app opens, device connection attempts and successes, successful pack installs, removals and moves, and metadata syncs. The SDK uses local storage and the app's random browser ID. The preference lasts 180 days. Withdraw consent in the same menu to stop capture and clear the browser ID.
+Events count app opens, device connection attempts and successes, pack installs, removals and moves, and metadata syncs. Each request omits browser, session, and device identifiers, omits cookies and the referring URL, and disables Porcupine's GeoIP lookup.
 
-Count distinct nonempty `distinct_id` values for opted-in browsers. Group by `json_extract_string(context, '$.session_id')` for visits. Historical events keep the IDs they were captured with.
+Pack install events record whether the ZIP has a title, its size rounded up in MiB, and the installation time in milliseconds. Device events can include the Lunii generation, and pack moves include the direction.

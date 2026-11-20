@@ -9,11 +9,9 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import { Notifications } from "@mantine/notifications";
 import { state } from "./store.ts";
 import BetaBadge from "./components/BetaTag.tsx";
-import { UsagePreferences } from "./components/UsagePreferences";
-import { captureUsage, clearLegacyUsageStorage, usageEnabled } from "./usage";
+import { captureUsage } from "./usage";
 
 enableReactUse();
-clearLegacyUsageStorage();
 captureUsage("lunii_app_opened");
 
 const queryClient = new QueryClient();
@@ -35,7 +33,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <WithMantine>
         <BetaBadge />
-        {usageEnabled && <UsagePreferences />}
         <App />
       </WithMantine>
     </QueryClientProvider>
