@@ -45,7 +45,6 @@ export const generateNiBinary = (
 
   // Is factory pack: byte set to one to avoid pack inspection by official Luniistore application
   view.setInt8(offset, 1);
-  offset++;
 
   // Jump to address 0x200 (512) for the actual list of nodes (already written 25 bytes)
   offset = 512;

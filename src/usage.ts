@@ -1,4 +1,7 @@
 import posthog from "posthog-js/no-external";
+import type { CaptureResult } from "posthog-js/no-external";
+import "posthog-js/dist/exception-autocapture.js";
+import { publicExceptions } from "./error-reporting";
 import type { UsageEvent } from "./usage-events";
 
 const browserKey: string | undefined = import.meta.env.VITE_PORCUPINE_BROWSER_KEY;
@@ -11,24 +14,50 @@ const usagePropertyNames = new Set([
   "move_direction",
 ]);
 
-function sendUsage(name: string, properties?: Record<string, unknown>, actorId?: string, sessionId?: string) {
-  if (!browserKey) return;
-
-  void fetch(`${ingestionOrigin}/ingest/v1/events`, {
+function send(path: string, headers: Record<string, string>, body: Record<string, unknown>) {
+  void fetch(`${ingestionOrigin}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Porcupine-Key": browserKey },
+    headers,
     credentials: "omit",
     referrerPolicy: "no-referrer",
     keepalive: true,
-    body: JSON.stringify({
-      type: "track",
-      name,
-      actor_id: actorId,
-      properties,
-      context: { geoip_disable: true, session_id: sessionId },
-    }),
+    body: JSON.stringify(body),
   }).catch(() => {
     // A metrics failure must not interrupt the app.
+  });
+}
+
+function sendUsage(name: string, properties?: Record<string, unknown>, actorId?: string, sessionId?: string) {
+  if (!browserKey) return;
+
+  send("/ingest/v1/events", { "Content-Type": "application/json", "X-Porcupine-Key": browserKey }, {
+    type: "track",
+    name,
+    actor_id: actorId,
+    properties,
+    context: { geoip_disable: true, session_id: sessionId },
+  });
+}
+
+function sendException({ uuid, timestamp, properties }: CaptureResult) {
+  if (!browserKey) return;
+  const exceptions = publicExceptions(properties.$exception_list, window.location.origin);
+  if (exceptions.length === 0) return;
+
+  send("/batch/", { "Content-Type": "text/plain" }, {
+    api_key: browserKey,
+    sent_at: new Date().toISOString(),
+    batch: [{
+      event: "$exception",
+      distinct_id: "$posthog_cookieless",
+      timestamp,
+      uuid,
+      properties: {
+        $exception_list: exceptions,
+        $exception_build_id: __COMMIT_HASH__.trim(),
+        $geoip_disable: true,
+      },
+    }],
   });
 }
 
@@ -45,14 +74,16 @@ function hasBrowserStorage() {
   }
 }
 
-const analytics = browserKey && hasBrowserStorage() ? posthog.init(browserKey, {
+const storageAvailable = Boolean(browserKey && hasBrowserStorage());
+const analytics = browserKey ? posthog.init(browserKey, {
   api_host: ingestionOrigin,
-  persistence: "localStorage",
+  persistence: storageAvailable ? "localStorage" : "memory",
   persistence_name: "lunii_usage",
   opt_out_capturing_persistence_type: "localStorage",
   cross_subdomain_cookie: false,
   person_profiles: "never",
   autocapture: false,
+  capture_exceptions: true,
   capture_pageview: false,
   capture_pageleave: false,
   capture_dead_clicks: false,
@@ -65,6 +96,10 @@ const analytics = browserKey && hasBrowserStorage() ? posthog.init(browserKey, {
   save_campaign_params: false,
   ip: false,
   before_send: (event) => {
+    if (event?.event === "$exception") {
+      sendException(event);
+      return null;
+    }
     if (!event?.event.startsWith("lunii_")) return null;
 
     const { distinct_id, $session_id } = event.properties;
@@ -84,7 +119,7 @@ const analytics = browserKey && hasBrowserStorage() ? posthog.init(browserKey, {
 }) : undefined;
 
 export function captureUsage(...[name, properties]: UsageEvent) {
-  if (analytics) {
+  if (storageAvailable && analytics) {
     analytics.capture(name, properties);
   } else {
     sendUsage(name, properties);

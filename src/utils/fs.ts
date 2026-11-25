@@ -20,7 +20,8 @@ export async function getFileHandleFromPath(
       throw new Error(
         `Error getting or creating directory handle for "${part}": ${
           (error as Error).message
-        }`
+        }`,
+        { cause: error }
       );
     }
   }
@@ -31,7 +32,8 @@ export async function getFileHandleFromPath(
     throw new Error(
       `Error creating or writing to file "${filePath}": ${
         (error as Error).message
-      }`
+      }`,
+      { cause: error }
     );
   }
 }

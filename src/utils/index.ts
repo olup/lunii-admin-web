@@ -3,7 +3,7 @@ export const getLuniiHandle = async () => {
     const dirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
     await dirHandle.getFileHandle(".pi");
     return dirHandle;
-  } catch (e) {
+  } catch {
     console.error(
       "Could not find the pack index file. Is that really a Lunii mount point?"
     );

@@ -63,7 +63,7 @@ export const getPacksMetadata = async (
           uuid,
           metadata: parse(packMetadataYaml) as PackMetadata,
         };
-      } catch (e) {
+      } catch {
         console.log("Metadata missing for pack ", uuid);
         return {
           uuid,
