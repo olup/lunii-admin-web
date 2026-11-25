@@ -18,10 +18,7 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className="app-shell">
       <header className="site-header">
         <Container size="lg">
-          <Group justify="space-between">
-            <Text fw={600} size="lg">
-              Lunii Admin Web
-            </Text>
+          <Group justify="flex-end">
             <Group gap="xs">
               <Tooltip
                 label={scheme === "dark" ? "Thème clair" : "Thème sombre"}
