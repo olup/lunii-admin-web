@@ -1,112 +1,159 @@
 import {
+  Alert,
+  Badge,
   Button,
-  Center,
-  Code,
-  Flex,
-  Overlay,
-  Paper,
+  Group,
+  Modal,
   Progress,
-  Space,
+  Stack,
   Text,
+  Title,
 } from "@mantine/core";
-import { IconClockCog } from "@tabler/icons-react";
+import { IconCheck, IconDeviceGamepad2, IconX } from "@tabler/icons-react";
 import { useState } from "react";
-import { state } from "../store";
+import { resetInstallationState, state } from "../store";
 import { TetrisBox } from "./Tetris";
-
-const stepToLabel = (step: string) => {
-  switch (step) {
-    case "UNZIPPING":
-      return "Extraction du pack";
-    case "PREPARING":
-      return "Préparation des fichiers";
-    case "CONVERTING":
-      return "Conversion des fichiers audio";
-    case "COPYING":
-      return "Copie sur l'appareil";
-    default:
-      return "Installation en cours";
-  }
+const labels: Record<string, string> = {
+  AUDIO_ENGINE: "Téléchargement et démarrage du moteur audio…",
+  UNZIPPING: "Ouverture du fichier ZIP",
+  PREPARING: "Préparation de l’histoire",
+  IMAGES: "Préparation des images",
+  CONVERTING: "Préparation des fichiers audio",
+  COPYING: "Copie sur votre Lunii",
 };
 export const InstallModal = () => {
   const [showTetris, setShowTetris] = useState(false);
-
   const installation = state.installation.use();
-  const audioProgress = installation.audioFileGenerationProgress;
-  const audioProgressPercent =
-    audioProgress.totalCount !== 0
-      ? (audioProgress.doneCount / audioProgress.totalCount) * 100
-      : 0;
-
-  if (installation.isInstalling)
-    return (
-      <Overlay blur={3}>
-        <Space h={100} />
-        <Center>
-          <Paper shadow="md" p="lg" radius="sm" w={500} withBorder>
-            <Text>
-              Installation du pack{" "}
-              {installation.packInstallationProgress.doneCount + 1} /{" "}
-              {installation.packInstallationProgress.totalCount}
-            </Text>
-            {installation.step !== "UNZIPPING" && (
-              <Text>
-                <Code>{installation.pack?.title}</Code>
+  const running = installation.isInstalling;
+  const results = installation.results;
+  const audio = installation.audioFileGenerationProgress;
+  const failed = results.some((result) => result.status === "error");
+  const remaining =
+    installation.packInstallationProgress.totalCount - results.length;
+  const close = () => {
+    if (!running) {
+      resetInstallationState();
+      setShowTetris(false);
+    }
+  };
+  return (
+    <Modal
+      opened={running || results.length > 0}
+      onClose={close}
+      closeButtonProps={{
+        "aria-label": "Fermer le résultat de l’installation",
+      }}
+      withCloseButton={!running}
+      closeOnClickOutside={!running}
+      closeOnEscape={!running}
+      centered
+      size="lg"
+      title={
+        running
+          ? "Une nouvelle aventure arrive"
+          : failed
+            ? "Installation interrompue"
+            : "Vos histoires sont prêtes"
+      }
+    >
+      <Stack gap="lg">
+        <div role="status" aria-live="polite">
+          {running ? (
+            <>
+              <Badge variant="light" mb="sm">
+                Pack {installation.packInstallationProgress.doneCount + 1} sur{" "}
+                {installation.packInstallationProgress.totalCount}
+              </Badge>
+              <Title order={3} size="h4">
+                {installation.pack?.title || "Préparation du pack…"}
+              </Title>
+              <Text c="dimmed" size="sm" mt="xs">
+                {labels[installation.step] || "Préparation de l’installation"}
               </Text>
-            )}
-            <Space h={10} />
-            <Flex>
-              <IconClockCog />
-              <Space w={5} />
-              <Text>{stepToLabel(installation.step)}</Text>
-            </Flex>
-            <Space h={10} />
-
-            {installation.step === "CONVERTING" ? (
-              <>
-                <Text>
-                  <Code>
-                    {audioProgress.doneCount} sur {audioProgress.totalCount}{" "}
-                    fichiers
-                  </Code>
-                </Text>
-                <Space h={10} />
+              {installation.step === "CONVERTING" && audio.totalCount > 0 ? (
+                <>
+                  <Progress
+                    aria-label="Fichiers audio terminés"
+                    mt="md"
+                    value={(audio.doneCount / audio.totalCount) * 100}
+                  />
+                  <Text size="xs" c="dimmed" mt={6}>
+                    {audio.doneCount} sur {audio.totalCount} fichiers audio
+                  </Text>
+                  <Progress
+                    aria-label="Conversion du fichier audio actuel"
+                    size="xs"
+                    mt="sm"
+                    value={audio.conversionProgress}
+                  />
+                </>
+              ) : (
                 <Progress
-                  h={10}
-                  value={audioProgress.conversionProgress}
-                  radius="xs"
+                  mt="md"
+                  aria-label="Opération en cours"
+                  value={100}
+                  animated
                 />
-                <Space h={10} />
-                <Progress
-                  h={10}
-                  animate
-                  value={audioProgressPercent}
-                  radius="xs"
-                />
-              </>
-            ) : (
-              <Progress h={10} animate value={100} radius="xs" />
-            )}
-
-            <Space h={10} />
-            <Center>
-              <Button
-                size="xs"
-                variant="subtle"
-                onClick={() => setShowTetris(!showTetris)}
-              >
-                Un peu long ? Essayez un Tetris
-              </Button>
-            </Center>
-            {showTetris && (
-              <Center>
-                <Space h={10} />
-                <TetrisBox />
-              </Center>
-            )}
-          </Paper>
-        </Center>
-      </Overlay>
-    );
-  else return null;
+              )}
+            </>
+          ) : (
+            <Text c="dimmed">
+              {results.filter((result) => result.status === "success").length}{" "}
+              pack(s) installé(s).
+              {remaining > 0 &&
+                ` ${remaining} pack(s) restant(s) n’ont pas été traités.`}
+            </Text>
+          )}
+        </div>
+        {running && (
+          <Alert variant="light" color="teal">
+            Gardez la Lunii branchée et cette page ouverte jusqu’à la fin de la
+            copie.
+          </Alert>
+        )}
+        {results.map((result, index) => (
+          <Alert
+            key={index}
+            color={result.status === "error" ? "red" : "teal"}
+            icon={
+              result.status === "error" ? (
+                <IconX size={18} />
+              ) : (
+                <IconCheck size={18} />
+              )
+            }
+            title={result.name}
+          >
+            {result.message}
+          </Alert>
+        ))}
+        {failed && (
+          <Text size="sm">
+            Fermez cette fenêtre. Si une récupération est nécessaire, elle sera
+            proposée au-dessus de votre bibliothèque.
+          </Text>
+        )}
+        {running && (
+          <Button
+            variant="subtle"
+            leftSection={<IconDeviceGamepad2 size={19} />}
+            onClick={() => setShowTetris(!showTetris)}
+          >
+            {showTetris ? "Masquer Tetris" : "Un peu de Tetris en attendant ?"}
+          </Button>
+        )}
+        {running && showTetris && <TetrisBox />}
+        {!running && !failed && (
+          <Text size="sm">
+            Éjectez la Lunii depuis votre ordinateur avant de la débrancher.
+          </Text>
+        )}
+        {!running && (
+          <Group justify="flex-end">
+            <Button onClick={close}>Retour à mes histoires</Button>
+          </Group>
+        )}
+      </Stack>
+    </Modal>
+  );
 };

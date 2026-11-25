@@ -9,9 +9,13 @@ export default defineConfig({
   define: {
     __COMMIT_HASH__: JSON.stringify(commitHash),
   },
-  // optimizeDeps: {
-  //   exclude: ["@ffmpeg/ffmpeg", "@ffmpeg/util"],
-  // },
+  optimizeDeps: { exclude: ["@ffmpeg/ffmpeg"] },
+  preview: {
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
+    },
+  },
   plugins: [react()],
   server: {
     headers: {

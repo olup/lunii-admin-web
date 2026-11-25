@@ -10,9 +10,16 @@ export const convertImageToBmp4 = async (blob: Blob): Promise<Blob> => {
 const getImage = async (blob: Blob): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(img);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Image du pack illisible."));
+    };
+    img.src = url;
   });
 };
 
@@ -40,7 +47,7 @@ const resizeAndFlip = async (img: HTMLImageElement) => {
 };
 
 function create4BitGrayscaleBMP(
-  context: OffscreenCanvasRenderingContext2D
+  context: OffscreenCanvasRenderingContext2D,
 ): Uint8Array {
   const width = context.canvas.width;
   const height = context.canvas.height;
@@ -61,7 +68,7 @@ function create4BitGrayscaleBMP(
         (data[index] * 0.299 +
           data[index + 1] * 0.587 +
           data[index + 2] * 0.114) /
-          16
+          16,
       );
 
       if (j === 0) {

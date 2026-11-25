@@ -1,170 +1,242 @@
+import { getLuniiStoreDb } from "./utils/db";
 import { notifications } from "@mantine/notifications";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { resetInstallationState, state } from "./store";
 import { captureUsage } from "./usage";
-import { uuidToRef } from "./utils/generators";
 import { installPack } from "./utils/lunii/installPack";
 import {
   changePackPosition,
   getPackFirstRaster,
   getPacksMetadata,
-  removePackUuid,
   savePackMetadata,
   syncPacksMetadataFromStore,
 } from "./utils/lunii/packs";
 import { PackMetadata } from "./utils/lunii/types";
+import {
+  deleteDevicePack,
+  discardInvalidJournal,
+  readPendingOperation,
+  recoverDeviceOperation,
+} from "./utils/lunii/transactions";
+import {
+  errorMessage,
+  isPickerCancelled,
+  withDeviceWrite,
+} from "./device-operations";
 
+function deviceHandle() {
+  const handle = state.luniiHandle.peek();
+  if (!handle) throw new Error("Connectez votre Lunii pour continuer.");
+  return handle;
+}
+const showError = (error: unknown) =>
+  notifications.show({
+    title: "Opération non terminée",
+    message: errorMessage(error),
+    color: "red",
+  });
+const deviceKey = () => ["device", state.connectionId.peek()];
 export const useGetPacksQuery = () =>
-  useQuery(["packs"], () => getPacksMetadata(state.luniiHandle.peek()!));
-
+  useQuery({
+    queryKey: [...deviceKey(), "packs"],
+    queryFn: () => getPacksMetadata(deviceHandle()),
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+export const useOtherWriterQuery = (enabled: boolean) =>
+  useQuery({
+    queryKey: ["other-device-writer"],
+    enabled,
+    refetchInterval: 2000,
+    queryFn: async () =>
+      !state.isWriting.peek() &&
+      !!(await navigator.locks.query()).held?.some(
+        (lock) => lock.name === "lunii-admin-device-write",
+      ),
+  });
+export const useRecoveryQuery = () =>
+  useQuery({
+    queryKey: [...deviceKey(), "recovery"],
+    queryFn: () => readPendingOperation(deviceHandle()),
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+function useRefreshDevice() {
+  const client = useQueryClient();
+  return () => client.invalidateQueries({ queryKey: deviceKey() });
+}
+export const useDiscardJournalMutation = () => {
+  const refresh = useRefreshDevice();
+  return useMutation({
+    mutationFn: () =>
+      withDeviceWrite(
+        deviceHandle(),
+        () => discardInvalidJournal(deviceHandle()),
+        true,
+      ),
+    onError: showError,
+    onSettled: refresh,
+  });
+};
+export const useRecoverMutation = () => {
+  const refresh = useRefreshDevice();
+  return useMutation({
+    mutationFn: () =>
+      withDeviceWrite(
+        deviceHandle(),
+        () => recoverDeviceOperation(deviceHandle()),
+        true,
+      ),
+    onError: showError,
+    onSettled: refresh,
+  });
+};
 export const useReorderPackMutation = () => {
-  const client = useQueryClient();
+  const refresh = useRefreshDevice();
   return useMutation({
-    mutationKey: "reorderPacks",
-    mutationFn: async (options: { from: number; to: number }) =>
-      changePackPosition(state.luniiHandle.peek()!, options.from, options.to),
-    onSuccess: (_, { from, to }) => {
-      if (from !== to) {
-        captureUsage("lunii_pack_reordered", {
-          device_generation: state.device.peek()?.version,
-          move_direction: to < from ? "up" : "down",
-        });
-      }
-      return client.invalidateQueries("packs");
-    },
-    onError: (err) =>
-      notifications.show({
-        title: "Erreur",
-        message: (err as Error).message,
-        color: "red",
+    mutationFn: (options: {
+      uuid: string;
+      direction: "up" | "down" | "first";
+    }) =>
+      withDeviceWrite(deviceHandle(), () =>
+        changePackPosition(deviceHandle(), options.uuid, options.direction),
+      ),
+    onSuccess: (_, { direction }) =>
+      captureUsage("lunii_pack_reordered", {
+        device_generation: state.device.peek()?.version,
+        move_direction: direction === "down" ? "down" : "up",
       }),
+    onError: showError,
+    onSettled: refresh,
   });
 };
-
 export const useRemovePackMutation = () => {
-  const client = useQueryClient();
+  const refresh = useRefreshDevice();
   return useMutation({
-    mutationKey: "reorderPacks",
-    mutationFn: async (packUuid: string) => {
-      const deviceHandle = state.luniiHandle.peek()!;
-      const contentDir = await deviceHandle.getDirectoryHandle(".content");
-
-      // remove pack uuid from the device index
-      await removePackUuid(deviceHandle, packUuid);
-
-      // remove pack content
-      await contentDir.removeEntry(uuidToRef(packUuid), {
-        recursive: true,
-      });
-
-      console.log("Pack removed");
-    },
-    onError: (err) =>
-      notifications.show({
-        title: "Erreur",
-        message: (err as Error).message,
-        color: "red",
+    mutationFn: (uuid: string) =>
+      withDeviceWrite(deviceHandle(), () =>
+        deleteDevicePack(deviceHandle(), uuid),
+      ),
+    onSuccess: () =>
+      captureUsage("lunii_pack_removed", {
+        device_generation: state.device.peek()?.version,
       }),
-    onSuccess: () => {
-      captureUsage("lunii_pack_removed", { device_generation: state.device.peek()?.version });
-      return client.invalidateQueries("packs");
-    },
+    onError: showError,
+    onSettled: refresh,
   });
 };
-
 export const useInstallPack = () => {
-  const client = useQueryClient();
+  const refresh = useRefreshDevice();
   return async () => {
+    const handle = deviceHandle();
+    const device = state.device.peek();
+    if (!device || state.isWriting.peek()) return;
     try {
       const fileHandles = await window.showOpenFilePicker({
         types: [{ accept: { "application/zip": [".zip"] } }],
         multiple: true,
       });
-      const device = state.device.peek()!;
-      const installation = state.installation;
-      installation.isInstalling.set(true);
-      installation.packInstallationProgress.totalCount.set(fileHandles.length);
-
-      for (const fileHandle of fileHandles) {
-        const startedAt = performance.now();
-        const { hasTitle, archiveSize } = await installPack(fileHandle, device);
-        captureUsage("lunii_pack_installed", {
-          device_generation: device.version,
-          has_pack_title: hasTitle,
-          archive_size_mib: Math.ceil(archiveSize / (1024 * 1024)),
-          install_duration_ms: Math.round(performance.now() - startedAt),
-        });
-        installation.packInstallationProgress.doneCount.set(
-          installation.packInstallationProgress.doneCount.peek() + 1
+      if (state.luniiHandle.peek() !== handle)
+        throw new Error("La Lunii a changé. Sélectionnez vos packs à nouveau.");
+      await withDeviceWrite(handle, async () => {
+        resetInstallationState();
+        const installation = state.installation;
+        installation.isInstalling.set(true);
+        installation.packInstallationProgress.totalCount.set(
+          fileHandles.length,
         );
-      }
-      notifications.show({
-        title: "Installation terminée",
-        message: `Les packs ont été installés avec succès`,
-        color: "green",
+        try {
+          for (const fileHandle of fileHandles) {
+            const startedAt = performance.now();
+            try {
+              const { hasTitle, archiveSize } = await installPack(
+                fileHandle,
+                device,
+                handle,
+              );
+              captureUsage("lunii_pack_installed", {
+                device_generation: device.version,
+                has_pack_title: hasTitle,
+                archive_size_mib: Math.ceil(archiveSize / (1024 * 1024)),
+                install_duration_ms: Math.round(performance.now() - startedAt),
+              });
+              installation.results.push({
+                name: fileHandle.name,
+                status: "success",
+                message: "Installé sur la Lunii",
+              });
+              installation.packInstallationProgress.doneCount.set(
+                installation.packInstallationProgress.doneCount.peek() + 1,
+              );
+            } catch (error) {
+              installation.results.push({
+                name: fileHandle.name,
+                status: "error",
+                message: errorMessage(error),
+              });
+              break;
+            }
+          }
+        } finally {
+          installation.isInstalling.set(false);
+        }
       });
-    } catch (err) {
-      console.log(err);
-      notifications.show({
-        title: "Erreur",
-        message: (err as Error).message,
-        color: "red",
-      });
+    } catch (error) {
+      if (!isPickerCancelled(error)) showError(error);
     } finally {
-      resetInstallationState();
-      client.invalidateQueries("packs");
+      await refresh();
     }
   };
 };
-
 export const useSyncMetadataMutation = () => {
-  const client = useQueryClient();
+  const refresh = useRefreshDevice();
   return useMutation({
-    mutationFn: () => syncPacksMetadataFromStore(state.luniiHandle.peek()!),
+    mutationFn: async () => {
+      const handle = deviceHandle();
+      const entries = await getLuniiStoreDb();
+      if (handle !== state.luniiHandle.peek())
+        throw new Error(
+          "La Lunii a changé. Relancez l’actualisation des titres.",
+        );
+      return withDeviceWrite(handle, () =>
+        syncPacksMetadataFromStore(handle, entries),
+      );
+    },
     onSuccess: () => {
-      captureUsage("lunii_metadata_synced", { device_generation: state.device.peek()?.version });
+      captureUsage("lunii_metadata_synced", {
+        device_generation: state.device.peek()?.version,
+      });
       notifications.show({
-        title: "Synchronisation terminée",
-        message: "Les métadonnées ont été synchronisées avec succès",
-        color: "green",
+        title: "Titres actualisés",
+        message: "Les informations disponibles ont été enregistrées.",
+        color: "teal",
       });
     },
-    onError: (err) =>
-      notifications.show({
-        title: "Erreur",
-        message: (err as Error).message,
-        color: "red",
-      }),
-    onSettled: () => {
-      client.invalidateQueries("packs");
-    },
+    onError: showError,
+    onSettled: refresh,
   });
 };
-
-export const useGetPackFirstRasterQuery = (uuid: string) =>
-  useQuery(["pack-raster", uuid], () => {
-    const deviceHandle = state.luniiHandle.peek()!;
-    return getPackFirstRaster(deviceHandle, uuid);
+export const useGetPackFirstRasterQuery = (uuid: string, enabled = true) =>
+  useQuery({
+    queryKey: [...deviceKey(), "pack-raster", uuid],
+    queryFn: () => getPackFirstRaster(deviceHandle(), uuid),
+    enabled: enabled && state.device.peek()?.version === "V2",
+    retry: false,
+    staleTime: Infinity,
   });
-
 export const useSavePackMetadataMutation = () => {
-  const client = useQueryClient();
+  const refresh = useRefreshDevice();
   return useMutation({
-    mutationKey: "updatePackMetadata",
-    onSettled: () => {
-      client.invalidateQueries("packs");
-    },
-    mutationFn: async ({
+    mutationFn: ({
       uuid,
       metadata,
-      shouldCreate = false,
     }: {
       uuid: string;
       metadata: PackMetadata;
-      shouldCreate?: boolean;
-    }) => {
-      const deviceHandle = state.luniiHandle.peek()!;
-      await savePackMetadata(deviceHandle, uuid, metadata, shouldCreate);
-    },
+    }) =>
+      withDeviceWrite(deviceHandle(), () =>
+        savePackMetadata(deviceHandle(), uuid, metadata, true),
+      ),
+    onSuccess: refresh,
   });
 };

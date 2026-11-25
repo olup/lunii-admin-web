@@ -18,6 +18,9 @@ export async function unzip(zipFile: File, outDir: FileSystemDirectoryHandle) {
 
     console.log("All files extracted and written to OPFS successfully.");
   } catch (error) {
-    console.error("An error occurred:", error);
+    throw new Error(
+      "Impossible d’extraire ce fichier ZIP. Vérifiez que le pack est complet.",
+      { cause: error },
+    );
   }
 }

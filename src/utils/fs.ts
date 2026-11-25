@@ -3,9 +3,14 @@ import { toArrayBuffer } from "./buffer";
 export async function getFileHandleFromPath(
   baseHandle: FileSystemDirectoryHandle,
   filePath: string,
-  createIfNotExists = false
+  createIfNotExists = false,
 ) {
-  const parts = filePath.split("/").filter((part) => part !== ""); // Split the path into parts
+  const parts = filePath.split("/").filter((part) => part !== "");
+  if (
+    parts.some((part) => part === "." || part === ".." || part.includes("\\"))
+  ) {
+    throw new Error("Chemin de fichier invalide dans le pack.");
+  }
   const fileName = parts.pop();
   if (!fileName) throw new Error(`Invalid file path: ${filePath}`);
 
@@ -21,7 +26,7 @@ export async function getFileHandleFromPath(
         `Error getting or creating directory handle for "${part}": ${
           (error as Error).message
         }`,
-        { cause: error }
+        { cause: error },
       );
     }
   }
@@ -33,7 +38,7 @@ export async function getFileHandleFromPath(
       `Error creating or writing to file "${filePath}": ${
         (error as Error).message
       }`,
-      { cause: error }
+      { cause: error },
     );
   }
 }
@@ -48,27 +53,29 @@ export const writeFile = async (
   root: FileSystemDirectoryHandle,
   path: string,
   content: Uint8Array | Blob | string,
-  createIfNotExists = false
+  createIfNotExists = false,
 ) => {
   const fileHandle = await getFileHandleFromPath(root, path, createIfNotExists);
   const writable = await fileHandle.createWritable();
-  const chunk = content instanceof Uint8Array ? toArrayBuffer(content) : content;
-  await writable.write(chunk);
-  await writable.close();
+  const chunk =
+    content instanceof Uint8Array ? toArrayBuffer(content) : content;
+  try {
+    await writable.write(chunk);
+    await writable.close();
+  } catch (error) {
+    await writable.abort().catch(() => {});
+    throw error;
+  }
 };
 
 export const copyAll = async (
   source: FileSystemDirectoryHandle,
-  destination: FileSystemDirectoryHandle
+  destination: FileSystemDirectoryHandle,
 ) => {
   for await (const entry of source.values()) {
     if (entry.kind === "file") {
       const file = await entry.getFile();
-      const writable = await destination
-        .getFileHandle(entry.name, { create: true })
-        .then((file) => file.createWritable());
-      await writable.write(file);
-      await writable.close();
+      await writeFile(destination, entry.name, file, true);
     } else {
       const dir = await destination.getDirectoryHandle(entry.name, {
         create: true,

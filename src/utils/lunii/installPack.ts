@@ -7,7 +7,6 @@ import { convertImageToBmp4 } from "../converters/image";
 import { encryptAes } from "../crypto/aes";
 import { encryptXxtea } from "../crypto/xxtea";
 import {
-  copyAll,
   getFileHandleFromPath,
   getRootDirectory,
   readFileAsText,
@@ -25,12 +24,13 @@ import { generateLiBinary } from "../generators/li";
 import { generateNiBinary } from "../generators/ni";
 import { unzip } from "../zip";
 import { DeviceV2, DeviceV3 } from "./deviceInfo";
-import { addPackUuid } from "./packs";
+import { installPreparedPack } from "./transactions";
 import { PackMetadata, StudioPack } from "./types";
 
 export const installPack = async (
   archive: FileSystemFileHandle,
-  device: DeviceV2 | DeviceV3
+  device: DeviceV2 | DeviceV3,
+  deviceHandle: FileSystemDirectoryHandle,
 ) => {
   // identify the encryption method according to the device
   let encrypt: (block: Uint8Array) => Promise<Uint8Array | null>;
@@ -48,9 +48,19 @@ export const installPack = async (
   const file = await archive.getFile();
   const root = await getRootDirectory();
 
+  // All callers hold the cross-tab device-write lock before entering this function.
+  for await (const entry of root.values()) {
+    if (
+      entry.kind === "directory" &&
+      (entry.name === "temp" || entry.name.startsWith("lunii-install-"))
+    ) {
+      await root.removeEntry(entry.name, { recursive: true });
+    }
+  }
+  const tempName = `lunii-install-${crypto.randomUUID()}`;
+  const tempDir = await root.getDirectoryHandle(tempName, { create: true });
   try {
-    // prepare the directories
-    const tempDir = await root.getDirectoryHandle("temp", { create: true });
+    // Each attempt owns its staging directory, including after a tab crash.
     const zipDir = await tempDir.getDirectoryHandle("zip", { create: true });
     const outDir = await tempDir.getDirectoryHandle("output", {
       create: true,
@@ -61,11 +71,27 @@ export const installPack = async (
 
     // read the pack.json
     const packJson = await readFileAsText(
-      await zipDir.getFileHandle("story.json")
+      await zipDir.getFileHandle("story.json"),
     );
     const pack: StudioPack = JSON.parse(packJson);
 
-    const packUuid = pack.uuid || pack.stageNodes[0].uuid;
+    if (
+      (pack.title != null && typeof pack.title !== "string") ||
+      (pack.description != null && typeof pack.description !== "string")
+    ) {
+      throw new Error(
+        "Le titre et la description du pack doivent être du texte.",
+      );
+    }
+    const packUuid = pack.uuid || pack.stageNodes?.[0]?.uuid;
+    if (
+      !/^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/i.test(packUuid) ||
+      !Array.isArray(pack.stageNodes) ||
+      !pack.stageNodes.length ||
+      !Array.isArray(pack.actionNodes)
+    ) {
+      throw new Error("Ce fichier ne contient pas un pack STUdio valide.");
+    }
     const metadata: PackMetadata = {
       description: pack.description || "",
       ref: uuidToRef(packUuid),
@@ -91,7 +117,7 @@ export const installPack = async (
       pack,
       imageAssetList,
       audioAssetList,
-      listNodesList
+      listNodesList,
     );
 
     const liBinary = generateLiBinary(listNodesList, pack.stageNodes);
@@ -101,7 +127,7 @@ export const installPack = async (
         ? await v3GenerateBtBinary()
         : await v2GenerateBtBinary(
             await encryptFirstBlock(riBinary, encrypt),
-            (device as DeviceV2).specificKey
+            (device as DeviceV2).specificKey,
           );
 
     if (!btBinary) throw new Error("Failed to generate bt binary");
@@ -113,31 +139,31 @@ export const installPack = async (
       outDir,
       "li",
       await encryptFirstBlock(liBinary, encrypt),
-      true
+      true,
     );
     await writeFile(
       outDir,
       "ri",
       await encryptFirstBlock(riBinary, encrypt),
-      true
+      true,
     );
     await writeFile(
       outDir,
       "si",
       await encryptFirstBlock(siBinary, encrypt),
-      true
+      true,
     );
     await writeFile(outDir, "bt", btBinary, true);
 
     console.log("All binaries were successfully generated");
 
-    state.installation.step.set("CONVERTING");
+    state.installation.step.set("IMAGES");
 
     // convert and write all images to bmp4
     for (const asset of imageAssetList) {
       const handle = await getFileHandleFromPath(
         zipDir,
-        "assets/" + asset.name
+        "assets/" + asset.name,
       );
       const imageFile = await handle.getFile();
 
@@ -153,9 +179,10 @@ export const installPack = async (
     console.log("All images were successfully converted to bmp4");
 
     state.installation.audioFileGenerationProgress.totalCount.set(
-      audioAssetList.length
+      audioAssetList.length,
     );
 
+    state.installation.step.set("CONVERTING");
     // convert and write all audios to mp3
     for (const asset of audioAssetList) {
       const assetName = asset.position.toString().padStart(8, "0");
@@ -164,13 +191,16 @@ export const installPack = async (
       if (asset.name === "BLANK_MP3") {
         const cipheredMp3 = await encryptFirstBlock(BLANK_MP3_FILE, encrypt);
         await writeFile(outDir, "sf/000/" + assetName, cipheredMp3, true);
+        state.installation.audioFileGenerationProgress.doneCount.set(
+          asset.position + 1,
+        );
         continue;
       }
 
       // otherwise convert the file
       const handle = await getFileHandleFromPath(
         zipDir,
-        "assets/" + asset.name
+        "assets/" + asset.name,
       );
       const audioFile = await handle.getFile();
 
@@ -180,10 +210,10 @@ export const installPack = async (
       await writeFile(outDir, "sf/000/" + assetName, cipheredMp3, true);
       // await writeFile(outDir, "sf/000/" + assetName + "-debug.mp3", mp3, true); //debug
       console.log(
-        `Audio file ${asset.position} / ${audioAssetList.length} converted to mp3`
+        `Audio file ${asset.position} / ${audioAssetList.length} converted to mp3`,
       );
       state.installation.audioFileGenerationProgress.doneCount.set(
-        asset.position
+        asset.position + 1,
       );
     }
     console.log("All audios were successfully converted to mp3");
@@ -193,33 +223,14 @@ export const installPack = async (
 
     console.log("Metadata was successfully generated");
 
-    // copy all temp files to the device
-    const deviceHandle = state.luniiHandle.peek();
-    const contentDir = await deviceHandle.getDirectoryHandle(".content");
-    const packDir = await contentDir.getDirectoryHandle(metadata.ref, {
-      create: true,
-    });
-
     state.installation.step.set("COPYING");
-    await copyAll(outDir, packDir);
-
-    console.log("Generated files were successfully copied to the device");
-
-    // add pack to device pack index
-    // handle errors silently as the pack is already installed
-    await addPackUuid(deviceHandle, metadata.uuid)
-      .then(() => {
-        console.log("Pack uuid was successfully added to the device index");
-      })
-      .catch((e) => {
-        console.error("Failed to add pack uuid to the device index", e);
-      });
+    await installPreparedPack(deviceHandle, metadata.uuid, outDir);
 
     const hasTitle = typeof pack.title === "string" && pack.title.trim() !== "";
     return { hasTitle, archiveSize: file.size };
   } finally {
     // clean
-    await root.removeEntry("temp", { recursive: true });
+    await root.removeEntry(tempName, { recursive: true }).catch(() => {});
     console.log("Temporary files were successfully removed");
     resetPackInstallationState();
   }

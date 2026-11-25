@@ -1,12 +1,11 @@
 import {
   ActionIcon,
   Badge,
-  Box,
-  Code,
-  Flex,
+  Button,
+  Group,
   Menu,
   Paper,
-  Space,
+  Stack,
   Text,
   Tooltip,
 } from "@mantine/core";
@@ -19,120 +18,149 @@ import {
   IconInfoCircle,
   IconTrash,
 } from "@tabler/icons-react";
-import { FC, useState } from "react";
+import { useState } from "react";
 import { PackShell } from "../utils/lunii/packs";
 import { PackMetadataModal } from "./PackMetadataModal";
 import { useRemovePackMutation, useReorderPackMutation } from "../queries";
+import { state } from "../store";
 
-export const Pack: FC<{
+export const Pack = ({
+  pack,
+  position,
+  total,
+  blocked,
+  filtered,
+}: {
   pack: PackShell;
   position: number;
-}> = ({ pack, position }) => {
-  const [metadataModalOpen, setMetadataModalOpen] = useState(false);
-
-  const { mutate: movePack } = useReorderPackMutation();
-  const { mutate: removePack } = useRemovePackMutation();
-
-  const openRemoveModal = () =>
+  total: number;
+  blocked: boolean;
+  filtered: boolean;
+}) => {
+  const [details, setDetails] = useState(false);
+  const move = useReorderPackMutation();
+  const remove = useRemovePackMutation();
+  const busy = state.isWriting.use();
+  const disabled = busy || blocked;
+  const title =
+    pack.metadata?.title ||
+    `Histoire sans titre · ${pack.uuid.slice(-8).toUpperCase()}`;
+  const removePack = () =>
     modals.openConfirmModal({
-      title: <Text>Supprimer un Pack</Text>,
+      title: "Supprimer cette histoire ?",
       centered: true,
       children: (
         <Text size="sm">
-          Êtes vous sûr de vouloir supprimer le pack{" "}
-          <Code>{pack.metadata?.title}</Code> ? Cette action est irréversible.
+          « {title} » sera retiré de la Lunii et ses fichiers seront supprimés.
+          Cette action est irréversible.
         </Text>
       ),
-      labels: { confirm: "Supprimer", cancel: "Annuler" },
-      confirmProps: { color: "red", rightIcon: <IconTrash size="1rem" /> },
-      onCancel: () => {},
-      onConfirm: () => removePack(pack.uuid),
+      labels: { confirm: "Supprimer le pack", cancel: "Garder l’histoire" },
+      confirmProps: { color: "red" },
+      onConfirm: () => remove.mutate(pack.uuid),
     });
-
   return (
     <>
-      <Paper
-        display="flex"
-        p={10}
-        shadow="xs"
-        withBorder
-        mb={10}
-        pos="relative"
-      >
-        <Box>
-          <ActionIcon
-            variant="subtle"
-            color="blue"
-            onClick={() => movePack({ from: position, to: position - 1 })}
+      <Paper className="pack-row" withBorder>
+        <span className="pack-position" aria-label={`Position ${position + 1}`}>
+          {String(position + 1).padStart(2, "0")}
+        </span>
+        <div className="pack-copy">
+          <Button
+            variant="transparent"
+            className="pack-title"
+            onClick={() => setDetails(true)}
           >
-            <IconArrowUp size="1rem" />
-          </ActionIcon>
-          <Space h={5} />
-          <ActionIcon
-            variant="subtle"
-            color="blue"
-            onClick={() => movePack({ from: position, to: position + 1 })}
-          >
-            <IconArrowDown size="1rem" />
-          </ActionIcon>
-        </Box>
-        <Space w={20} />
-        <Box>
-          <Flex>
-            <Badge>{pack.uuid}</Badge>
-            {!pack.metadata ? (
-              <Tooltip
-                openDelay={500}
-                multiline
-                width={300}
-                label={`Vous pouvez importer les métadonnées depuis le Lunii Store ou la base de donnée de STUdio. A faire une fois.`}
-              >
-                <Badge ml={5} color="yellow">
-                  Métadonnée manquantes
-                </Badge>
-              </Tooltip>
-            ) : null}
-          </Flex>
-          <Text>{pack.metadata?.title}</Text>
-          <Text lineClamp={1} color="gray">
-            {pack.metadata?.description}
+            {title}
+          </Button>
+          <Text size="sm" c="dimmed" lineClamp={2}>
+            {pack.metadata?.description ||
+              "Ajoutez un titre et une description pour retrouver cette histoire."}
           </Text>
-        </Box>
-        <Box pos="absolute" top={5} right={5}>
-          <Menu position="bottom-start">
+          {pack.metadataError && (
+            <Badge size="xs" variant="light" color="orange" mt={7}>
+              Informations indisponibles
+            </Badge>
+          )}
+          {!pack.metadata?.title && !pack.metadataError && (
+            <Badge size="xs" variant="light" color="orange" mt={7}>
+              Titre à compléter
+            </Badge>
+          )}
+        </div>
+        <Group gap="xs" className="pack-actions">
+          <Stack gap={2}>
+            <Tooltip label="Monter">
+              <ActionIcon
+                aria-label={`Monter ${title}`}
+                variant="subtle"
+                color="gray"
+                disabled={disabled || filtered || position === 0}
+                onClick={() =>
+                  move.mutate({ uuid: pack.uuid, direction: "up" })
+                }
+              >
+                <IconArrowUp size={17} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Descendre">
+              <ActionIcon
+                aria-label={`Descendre ${title}`}
+                variant="subtle"
+                color="gray"
+                disabled={disabled || filtered || position === total - 1}
+                onClick={() =>
+                  move.mutate({ uuid: pack.uuid, direction: "down" })
+                }
+              >
+                <IconArrowDown size={17} />
+              </ActionIcon>
+            </Tooltip>
+          </Stack>
+          <Menu position="bottom-end">
             <Menu.Target>
-              <ActionIcon variant="subtle" color="blue">
-                <IconDots size="1rem" />
+              <ActionIcon
+                aria-label={`Actions pour ${title}`}
+                variant="subtle"
+                color="gray"
+              >
+                <IconDots size={19} />
               </ActionIcon>
             </Menu.Target>
             <Menu.Dropdown>
               <Menu.Item
-                icon={<IconInfoCircle size="1rem" />}
-                onClick={() => setMetadataModalOpen(true)}
+                leftSection={<IconInfoCircle size={16} />}
+                onClick={() => setDetails(true)}
               >
-                Details
+                Détails et titre
               </Menu.Item>
               <Menu.Item
-                icon={<IconArrowsUp size="1rem" />}
-                onClick={() => movePack({ from: position, to: 0 })}
+                leftSection={<IconArrowsUp size={16} />}
+                disabled={disabled || filtered || position === 0}
+                onClick={() =>
+                  move.mutate({ uuid: pack.uuid, direction: "first" })
+                }
               >
-                Mettre en premier
+                Lire en premier
               </Menu.Item>
+              <Menu.Divider />
               <Menu.Item
+                leftSection={<IconTrash size={16} />}
                 color="red"
-                icon={<IconTrash size="1rem" />}
-                onClick={() => openRemoveModal()}
+                disabled={disabled}
+                onClick={removePack}
               >
                 Supprimer
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>
-        </Box>
+        </Group>
       </Paper>
-      {metadataModalOpen && (
+      {details && (
         <PackMetadataModal
-          packUuid={pack.uuid}
-          onClose={() => setMetadataModalOpen(false)}
+          pack={pack}
+          blocked={blocked}
+          onClose={() => setDetails(false)}
         />
       )}
     </>

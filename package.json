@@ -11,34 +11,35 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:browser": "playwright test",
+    "test:production": "playwright test --config playwright.production.config.ts"
   },
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@ffmpeg/core": "^0.8.5",
-    "@ffmpeg/ffmpeg": "^0.11.6",
+    "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "@legendapp/state": "^1.11.3",
-    "@mantine/core": "^6.0.22",
-    "@mantine/form": "^6.0.22",
-    "@mantine/hooks": "^6.0.22",
-    "@mantine/modals": "^6.0.22",
-    "@mantine/notifications": "^6.0.22",
-    "@oieduardorabelo/use-user-agent": "^5.0.1",
+    "@mantine/core": "^9.8.2",
+    "@mantine/form": "^9.8.2",
+    "@mantine/hooks": "^9.8.2",
+    "@mantine/modals": "^9.8.2",
+    "@mantine/notifications": "^9.8.2",
     "@tabler/icons-react": "^3.53.0",
+    "@tanstack/react-query": "5.108.4",
     "jszip": "^3.10.2",
     "posthog-js": "1.454.6",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-query": "^3.39.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "react-tetris": "^0.4.0",
     "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@playwright/test": "^1.65.1",
     "@types/node": "^22.20.6",
-    "@types/react": "^18.3.32",
-    "@types/react-dom": "^18.3.7",
+    "@types/react": "^19.3.3",
+    "@types/react-dom": "^19.3.0",
     "@types/wicg-file-system-access": "^2023.10.7",
     "@vitejs/plugin-react": "6.3.0",
     "eslint": "^10.15.0",
@@ -47,6 +48,15 @@
     "globals": "17.14.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "8.74.0",
-    "vite": "^8.3.8"
+    "vite": "^8.3.8",
+    "vitest": "^5.1.2"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "react-tetris>react": "19",
+        "react-tetris>react-dom": "19"
+      }
+    }
   }
 }
